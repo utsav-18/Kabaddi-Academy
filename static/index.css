@@ -187,3 +187,69 @@ nav {
         order: 2;
     }
 }
+
+/* Registration container */
+.registration-container {
+    max-width: 500px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Title */
+.form-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+/* Labels and inputs */
+.registration-form label {
+    display: block;
+    margin-bottom: 12px;
+    color: #444;
+    font-weight: bold;
+}
+
+.form-input {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* Button styling */
+.btn-primary {
+    background: #facc15;
+    color: #000;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    display: block;
+    margin-top: 15px;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: #eab308;
+}
+
+/* Test mode text */
+.test-mode-info {
+    font-size: 14px;
+    margin-top: 15px;
+    color: #666;
+    text-align: center;
+}
+
+code {
+    background: #f3f3f3;
+    padding: 2px 4px;
+    border-radius: 4px;
+}
