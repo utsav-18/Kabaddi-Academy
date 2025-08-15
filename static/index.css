@@ -263,6 +263,115 @@ code {
     border-radius: 4px;
 }
 
+/* abou-us-container start */
+ .about-container {
+    padding: 40px 20px;
+    margin: 60px auto 0 auto;
+    max-width: 1200px;
+}
+
+.about-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.about-header h2 {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #FFD700; /* Yellow highlight */
+    border-bottom: 4px solid #FFD700;
+    display: inline-block;
+    padding-bottom: 8px;
+    transition: text-shadow 0.3s ease;
+}
+
+.about-header h2:hover {
+    text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+}
+
+.about-content {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.about-left {
+    flex: 1;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.about-left img {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0px 4px 8px rgba(255,255,255,0.2);
+    object-fit: cover;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-left img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #FFD700;
+}
+
+.about-right {
+    flex: 2;
+    min-width: 300px;
+    display: grid;
+    gap: 20px;
+}
+
+.about-right > div {
+    background: #111; /* Dark card background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(255,255,255,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.about-right > div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px #FFD700, 0 6px 16px rgba(255,255,255,0.1);
+}
+
+.about-right h3 {
+    color: #FFD700; /* Yellow headings */
+    margin-bottom: 8px;
+    font-size: 1.3rem;
+    transition: text-shadow 0.3s ease;
+}
+
+.about-right h3:hover {
+    text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+}
+
+.about-right p {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #ccc; /* Light grey for readability */
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .about-content {
+        flex-direction: column;
+    }
+    .about-header h2 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .about-header h2 {
+        font-size: 1.5rem;
+    }
+    .about-right h3 {
+        font-size: 1.1rem;
+    }
+}
+
 
 /* dashboard */
 /* Container */
@@ -439,3 +548,59 @@ code {
         font-size: 10px;
     }
 }
+
+/* dark button */
+.dark-mode-btn {
+    background: #facc15;
+    color: #000;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s;
+    font-size: 14px;
+}
+
+.dark-mode-btn:hover {
+    background: #eab308;
+}
+body.dark-mode {
+    background-color: #000;
+    color: #fff;
+}
+
+body.dark-mode .heading {
+    background-color: #111;
+    color: #fff;
+}
+
+body.dark-mode .registration-container,
+body.dark-mode .contact-container,
+body.dark-mode .about-right > div,
+body.dark-mode .student-table {
+    background-color: #111;
+    color: #fff;
+}
+
+body.dark-mode .nav-link a,
+body.dark-mode .student-table a {
+    color: #facc15;
+}
+
+body.dark-mode .dark-mode-btn {
+    background: #222;
+    color: #facc15;
+}
+body.dark-mode .mobile-menu {
+    background-color: #111; /* Dark background for menu */
+    color: #fff; /* Text color */
+}
+
+body.dark-mode .mobile-menu a {
+    color: #facc15; /* Links color in dark mode */
+}
+
+body.dark-mode .close-btn i {
+    color: #fff; /* Close icon color */
+}
+
