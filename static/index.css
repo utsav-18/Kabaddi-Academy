@@ -1,0 +1,189 @@
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+/* Main Container */
+
+.main-container {
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Header */
+.heading {
+    background: #0F1821;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 15px 40px;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+    width: 100vw;
+    gap: 20px; /* Space between elements */
+}
+
+/* Logo at left */
+#log-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+#log-img img {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* Title */
+.title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+}
+.title h1 {
+    font-size: .8rem;
+    font-weight: 600;
+    display: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Nav Links */
+nav {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-link {
+    display: flex;
+    gap: 30px;
+    margin-left: auto; /* Push nav to right */
+}
+
+.nav-link a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 5px 8px;
+    transition: 0.3s;
+}
+
+.nav-link a:hover {
+    background: #facc15;
+    color: #222;
+    border-radius: 4px;
+}
+
+/* Menu Button (Hidden on Desktop) */
+.menu-btn {
+    display: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+}
+.menu-btn:hover {
+    color: #facc15;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -70%;
+    width: 70%;
+    height: 100vh;
+    background: #0F1821;
+    padding-top: 45px;
+    transition: right 0.3s ease-in-out;
+    z-index: 2000;
+}
+
+.mobile-menu.open {
+    right: 0;
+}
+
+/* Vertical Menu Items */
+.mobile-menu ul {
+    list-style: none;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mobile-menu ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 15px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.032);
+    transition: 0.4s ease;
+    display: block;
+}
+
+.mobile-menu ul li a:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #facc15;
+}
+
+/* Close Button */
+.close-btn {
+    position: absolute;
+    top: 25px;
+    left: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: white;
+}
+.close-btn:hover {
+    color: #facc15;
+}
+
+/* Mobile View */
+@media (max-width: 768px) {
+    .heading {
+        justify-content: space-between;
+        padding: 15px 20px;
+        height: 60px;
+        gap: 10px;
+        box-shadow: 0 2px 5px rgba(202, 254, 16, 0.203);
+    }
+
+    .nav-link {
+        display: none;
+    }
+
+    #log-img {
+        width: 12vw;
+        height: 12vw;
+        max-width: 80px;
+        max-height: 80px;
+    }
+
+    .title h1 {
+        margin-left: 20px;
+        display: block;
+        padding-left: 17px;
+    }
+
+    .menu-btn {
+        display: block;
+        order: 2;
+    }
+}

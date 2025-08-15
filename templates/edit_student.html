@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Edit Student</h1>
+<form method="post">
+    Name: <input type="text" name="name" value="{{ student['Name'] }}" required><br>
+    Father Name: <input type="text" name="father_name" value="{{ student['Father Name'] }}"><br>
+    DOB: <input type="date" name="dob" value="{{ student['DOB'] }}"><br>
+    Class: <input type="text" name="class" value="{{ student['Class'] }}"><br>
+    Academy Join (Duration): <input type="text" name="academy_join" value="{{ student['Academy Join'] }}"><br>
+    Contact: <input type="text" name="contact" value="{{ student['Mobile No.'] }}" required><br>
+    <input type="submit" value="Update">
+</form>
+<a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+{% endblock %}

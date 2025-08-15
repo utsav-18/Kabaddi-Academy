@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration & Payment</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}" />
+    <style>
+        .registration-container {
+            padding: 2rem 4rem; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        .mobile-menu {
+            display: none;
+            background: #222;
+            padding: 15px;
+        }
+
+        .mobile-menu ul {
+            list-style: none;
+        }
+
+        .mobile-menu ul li {
+            padding: 8px 0;
+        }
+
+        .mobile-menu ul li a {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            color: #222;
+        }
+
+        form {
+            max-width: 500px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+        }
+
+        form input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        form button {
+            background: #facc15;
+            color: #222;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        form button:hover {
+            background: #eab308;
+        }
+
+        p {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+            color: #555;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                display: none;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .title h1 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+ 
+    <div class="main-container">
+        <div class="heading">
+            <div id="log-img">
+                <img src="{{ url_for('static', filename='kvslogo.png') }}" alt="KVS Sports Academy Logo" />
+            </div>
+            <div class="menu-btn" id="menu-btn">
+                <i class="ri-menu-line"></i>
+            </div>
+            <div class="title">
+                <h1>Welcome to KVS Kabaddi Academy</h1>
+            </div>  
+            <div class="nav-link">
+                <nav>
+                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('about') }}">About Us</a>
+                <a href="{{ url_for('admission') }}">Admission</a>
+                <a href="{{ url_for('contact') }}">Contact Us</a>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a> 
+                <a href="{{ url_for('registration') }}">Register</a> 
+                <!-- <a href="{{ url_for('login') }}">Login</a> -->
+            </nav>
+            </div>
+        </div>
+
+        <div class="mobile-menu" id="mobile-menu">
+            <div class="close-btn" id="close-btn">
+                <i class="ri-close-line"></i>
+            </div>
+            <ul>
+                <li><a href="{{ url_for('about') }}">About Us</a></li>
+                <li><a href="{{ url_for('sports') }}">Sports</a></li>
+                <li><a href="{{ url_for('admission') }}">Admission</a></li>
+                <li><a href="{{ url_for('achievements') }}">Achievements</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
+            </ul>
+        </div>
+                    <div class="registration-container">
+
+                            
+                            <h1>Register & Pay</h1>
+
+                            <form id="regForm">
+                                Name: <input type="text" name="name" required><br>
+                                Father Name: <input type="text" name="father_name"><br>
+                                DOB: <input type="date" name="dob"><br>
+                                Class: <input type="text" name="class"><br>
+                                Academy Join: <input type="text" name="academy_join"><br>
+                                Mobile No.: <input type="text" name="contact" required><br>
+                                <button type="button" id="payBtn">Pay ₹1 & Register</button>
+                            </form>
+
+                            <p>Test Mode — Use card 4111 1111 1111 1111, any future expiry, CVV 123</p>
+
+                    </div>
+    </div>
+
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+    document.getElementById("payBtn").addEventListener("click", function() {
+        const form = document.getElementById("regForm");
+        const formData = new FormData(form);
+        let data = {};
+        formData.forEach((v, k) => data[k] = v);
+
+        const options = {
+            key: "rzp_test_XbnqrIC7Y9cJV0", // Razorpay test key
+            amount: 100, // ₹1 in paise
+            currency: "INR",
+            name: "KVS Kabaddi Academy",
+            description: "Admission Fee",
+            prefill: {
+                name: data.name,
+                contact: data.contact
+            },
+            theme: { color: "#FACC15" },
+            handler: function (response) {
+                fetch("/registration", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        ...data,
+                        payment_id: response.razorpay_payment_id
+                    })
+                })
+                .then(r => r.json())
+                .then(res => {
+                    alert("Registration & Payment Successful!");
+                    window.location.href = "/dashboard";
+                });
+            }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+    });
+    </script>
+</body>
+</html>

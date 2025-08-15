@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kabaddi Academy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <a href="{{ url_for('home') }}">Home</a> |
+        <a href="{{ url_for('dashboard') }}">Dashboard</a> |
+        <a href="{{ url_for('registration') }}">Register</a> |
+        <a href="{{ url_for('login') }}">Login</a> |
+        <a href="{{ url_for('about') }}">About</a> |
+        <a href="{{ url_for('admission') }}">Admission</a> |
+        <a href="{{ url_for('contact') }}">Contact</a> |
+        <a href="{{ url_for('sports') }}">Sports</a> |
+        <a href="{{ url_for('achievements') }}">Achievements</a> |
+        <a href="{{ url_for('appointment') }}">Appointment</a>
+    </nav>
+    <hr>
+    {% block content %}{% endblock %}
+</body>
+</html>
