@@ -1,7 +1,33 @@
 {% extends "base.html" %}
 {% block title %}Contact Us - KVS Kabaddi Academy{% endblock %}
+
 {% block content %}
-<h2>Contact Us</h2>
-<p>Contact details and form here.</p>
+<div class="contact-container">
+    <h2 class="contact-title">Contact Us</h2>
+    <p class="contact-subtitle">Reach out to KVS Kabaddi Academy easily!</p>
+
+<div class="contact-icons">
+    <!-- Phone -->
+    <a href="tel:+918302344092" class="contact-btn phone" title="Call Us">
+        <i class="ri-phone-fill"></i>
+        <span>Call</span>
+    </a>
+    <!-- WhatsApp -->
+    <a href="https://wa.me/918302344092?text=Hi%2C%20I%27m%20interested%20in%20your%20services." 
+       target="_blank" class="contact-btn whatsapp" title="WhatsApp">
+        <i class="ri-whatsapp-fill"></i>
+        <span>WhatsApp</span>
+    </a>
+    <!-- Instagram -->
+    <a href="https://www.instagram.com/kvs__academy?igsh=MXRhbGV4aDMzaW5sdQ==" target="_blank" class="contact-btn insta" title="Instagram">
+        <i class="ri-instagram-fill"></i>
+        <span>Instagram</span>
+    </a>
+    <!-- Email -->
+    <a href="info@kvsacademy.org" class="contact-btn email" title="Email">
+        <i class="ri-mail-fill"></i>
+        <span>Email</span>
+    </a>
+</div>
+</div>
 {% endblock %}
- 

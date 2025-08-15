@@ -13,10 +13,6 @@
         
 /* Main Container */
 
-.main-container {
-    height: 100vh;
-    width: 100vw;
-}
 
 /* Header */
 .heading {
@@ -186,10 +182,23 @@ nav {
         display: block;
         order: 2;
     }
+    .reg-main-container{
+    margin-top: -25px;
+    }
 }
 
 /* Registration container */
+.reg-main-container{
+    margin-top: 60px;
+    position: fixed;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .registration-container {
+
     max-width: 500px;
     margin: 40px auto;
     background: #fff;
@@ -252,4 +261,181 @@ code {
     background: #f3f3f3;
     padding: 2px 4px;
     border-radius: 4px;
+}
+
+
+/* dashboard */
+/* Container */
+.student-table-container {
+    padding: 20px;
+    margin-top: 70px; /* Avoid navbar overlap */
+    font-family: Arial, sans-serif;
+}
+
+/* Heading */
+.student-table-title {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* Desktop Table Styling */
+.student-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #ccc; /* Outer border */
+}
+
+.student-table th,
+.student-table td {
+    border: 1px solid #ccc; /* Full grid lines */
+    padding: 12px;
+    text-align: left;
+}
+
+.student-table th {
+    background-color: #facc15;
+    color: #000;
+    font-weight: bold;
+}
+
+.student-table tr:hover {
+    background-color: #f6f6f6;
+}
+
+.student-table a {
+    color: #1d4ed8;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.student-table a:hover {
+    text-decoration: underline;
+}
+
+/* ========================= */
+/*  Mobile View (Phone) for dashboard     */
+/* ========================= */
+@media (max-width: 768px) {
+    .student-table, 
+    .student-table thead, 
+    .student-table tbody, 
+    .student-table th, 
+    .student-table td, 
+    .student-table tr {
+        display: block;
+        width: 100%;
+    }
+
+    .student-table thead {
+        display: none;
+    }
+
+    .student-table tr {
+        margin-bottom: 15px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0px 2px 6px rgba(0,0,0,0.1);
+        padding: 10px;
+    }
+
+    .student-table td {
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+        font-size: 14px;
+        border-bottom: 1px solid #ccc; /* Line after each row in mobile */
+    }
+
+    .student-table td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        text-transform: capitalize;
+        color: #333;
+    }
+}
+
+/* Contact Us Page Styles */
+.contact-container {
+    max-width: 600px;
+    margin: 120px auto 40px;
+    padding: 30px 20px;
+    background: #fdfdfd;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+.contact-title {
+    font-size: 28px;
+    color: #222;
+    margin-bottom: 5px;
+}
+
+.contact-subtitle {
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.contact-icons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.contact-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    color: #fff;
+    text-decoration: none;
+    font-size: 24px;
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+}
+
+.contact-btn span {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* Colors for each platform */
+.contact-btn.phone { background: #0a74da; }
+.contact-btn.whatsapp { background: #25D366; }
+.contact-btn.insta { background: #E1306C; }
+.contact-btn.email { background: #FF5722; }
+
+.contact-btn:hover {
+    transform: scale(1.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+/* Responsive for phones */
+@media (max-width: 480px) {
+    .contact-container {
+        margin: 80px 15px 30px;
+        padding: 20px;
+    }
+
+    .contact-btn {
+        width: 70px;
+        height: 70px;
+        font-size: 20px;
+    }
+
+    .contact-btn span {
+        font-size: 10px;
+    }
 }

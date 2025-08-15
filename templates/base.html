@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}" />
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 </head>
-<body><header> 
-    <div class="main-container">
+<body>
+<header> 
         <div class="heading">
             <div id="log-img">
                 <img src="{{ url_for('static', filename='kvslogo.png') }}" alt="KVS Sports Academy Logo" />
@@ -23,7 +23,9 @@
                 <nav>
                 <a href="{{ url_for('home') }}">Home</a>
                 <a href="{{ url_for('about') }}">About Us</a>
+                <a href="{{ url_for('sports') }}">Sports</a>
                 <a href="{{ url_for('admission') }}">Admission</a>
+                <a href="{{ url_for('achievements') }}">Achievements</a>
                 <a href="{{ url_for('contact') }}">Contact Us</a>
                 <a href="{{ url_for('dashboard') }}">Dashboard</a> 
                 <a href="{{ url_for('registration') }}">Register</a> 
@@ -45,9 +47,9 @@
                 <li><a href="{{ url_for('admission') }}">Admission</a></li>
                 <li><a href="{{ url_for('achievements') }}">Achievements</a></li>
                 <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
+                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
             </ul>
         </div>
-    </div>
 </header>
 
 
