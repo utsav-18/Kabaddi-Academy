@@ -61,8 +61,102 @@
         <div class="overlapping-bg"></div>
 
         <!-- write your code from here -->
-
-
+        <div class="landing-page">
+            <!-- Hero Section -->
+            <section class="hero">
+                <!-- Slider Images -->
+                <div class="hero-slider">
+                    <img src="{{ url_for('static', filename='kvs1.jpg') }}" class="slide active" alt="Kabaddi 1">
+                    <img src="{{ url_for('static', filename='kvs2.jpg') }}" class="slide" alt="Kabaddi 2">
+                    <img src="{{ url_for('static', filename='kvs10.jpg') }}" class="slide" alt="Kabaddi 3">
+                    <img src="{{ url_for('static', filename='kvs6.jpg') }}" class="slide" alt="Kabaddi 4">
+                </div>
+        
+                <!-- Overlay Content -->
+                <div class="hero-overlay">
+                    <div class="hero-content">
+                        <h1>KVS Kabaddi Academy</h1>
+                        <p>Train Like a Pro. Play Like a Champion.</p>
+                        <p>Join KVS Kabaddi Academy, Jodhpur – Home of National-Level Players.</p>
+                        <div class="hero-buttons">
+                            <a href="#admission" class="btn">Join Now</a>
+                            <a href="#programs" class="btn btn-outline">View Programs</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        
+            <!-- Coaches Section -->
+            <section class="coaches">
+                <h2>Meet Our Coaches</h2>
+                <div class="coaches-container">
+                    <div class="coach-card">
+                        <img src="{{ url_for('static', filename='kvscoach.jpeg') }}" alt="Coach 1">
+                        <h3>Surendra Singh Bhati (Coach)</h3>
+                        <p>Expert in offensive strategies with 2+ years of coaching experience.</p>
+                    </div>
+                    <div class="coach-card">
+                        <img src="{{ url_for('static', filename='nsiicoach.jpeg') }}" alt="Coach 2">
+                        <h3>Naman Choudhary (NIS Coach)</h3>
+                        <p>Specialist in fitness and agility training, producing national-level players.</p>
+                    </div>
+                </div>
+            </section>
+        
+            <!-- Hostel & Training Facilities Section -->
+            <section class="hostel-training" id="facilities">
+                <h2>Hostel & Training Facilities</h2>
+                <div class="facilities-container">
+        
+                    <!-- Hostel Facility -->
+                    <div class="facility-card">
+                        <img src="{{ url_for('static', filename='hostel.jpg') }}" alt="Hostel Facility">
+                        <h3>🏠 Hostel + Training</h3>
+                        <p>Stay & Train with the best Kabaddi players. Comfortable hostel rooms, healthy meals, and 
+                        daily training sessions under expert supervision.</p>
+                        <div class="price">
+                            <span>₹5500 / month</span>
+                        </div>
+                    </div>
+        
+                    <!-- Training Only -->
+                    <div class="facility-card">
+                        <img src="{{ url_for('static', filename='traing.jpg') }}" alt="Training Facility">
+                        <h3>💪 Training Only</h3>
+                        <p>Intense professional Kabaddi training sessions designed for improving stamina, agility, 
+                        and advanced playing techniques.</p>
+                        <div class="price">
+                            <span>₹500 / month</span>
+                        </div>
+                    </div>
+        
+                </div>
+            </section>
+            
+            <!-- ===== Performance Highlights / Gallery Section ===== -->
+<section class="gallery" id="gallery">
+    <div class="gallery-header">
+      <h2>Performance Highlights</h2>
+      <p>Capturing our Kabaddi spirit, training moments, and achievements</p>
+    </div>
+  
+    <div class="carousel-container">
+      <div class="carousel-track">
+        <img src="{{ url_for('static', filename='achie1.jpeg') }}" alt="Highlight 1">
+        <img src="{{ url_for('static', filename='achie2.jpeg') }}" alt="Highlight 2">
+        <img src="{{ url_for('static', filename='achie5.jpeg') }}" alt="Highlight 3">
+        <img src="{{ url_for('static', filename='achhie4.jpeg') }}" alt="Highlight 4">
+      </div>
+  
+      <!-- Navigation buttons -->
+      <button class="carousel-btn prev">&#10094;</button>
+      <button class="carousel-btn next">&#10095;</button>
+    </div>
+  </section>
+  
+        </div>
+        
+        
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
