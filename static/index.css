@@ -13,7 +13,7 @@
         
 /* Main Container */
 .overlapping-bg{
-    height: 100px;
+    height: 90px;
 }
 
 /* Header */
@@ -188,6 +188,9 @@ nav {
         align-items: flex-start;  /* push form up */
         margin-top: 0;            /* remove negative margin hack */
     }
+    .overlapping-bg{
+    height: 60px;
+}
 }
 
 
