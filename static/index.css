@@ -12,7 +12,9 @@
         }
         
 /* Main Container */
-
+.overlapping-bg{
+    height: 100px;
+}
 
 /* Header */
 .heading {
@@ -549,7 +551,8 @@ code {
     }
 }
 
-/* dark button */
+
+/* dark button  start*/ 
 .dark-mode-btn {
     background: #facc15;
     color: #000;
@@ -604,3 +607,4 @@ body.dark-mode .close-btn i {
     color: #fff; /* Close icon color */
 }
 
+/* dark button off */
