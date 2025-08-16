@@ -29,7 +29,7 @@
                 <a href="{{ url_for('contact') }}">Contact Us</a>
                 <a href="{{ url_for('dashboard') }}">Dashboard</a> 
                 <a href="{{ url_for('registration') }}">Register</a> 
-                <button id="darkModeToggle" class="dark-mode-btn">🌙 Dark Mode</button>
+                <button id="darkModeToggle" class="dark-mode-btn"><span>🌙</span> Dark Mode</button>
                 <!-- <a href="{{ url_for('login') }}">Login</a> -->
             </nav>
                 
@@ -49,6 +49,11 @@
                 <li><a href="{{ url_for('achievements') }}">Achievements</a></li>
                 <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
                 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li>
+                    <button class="dark-mode-btn" id="darkModeToggleMobile">
+                        <span>☾ Dark Mode</span>
+                    </button>
+                </li>
             </ul>
         </div>
 </header>

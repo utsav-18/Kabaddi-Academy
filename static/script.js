@@ -12,26 +12,64 @@
             mobileMenu.classList.remove('open');
         });
 }
-// Mobile Display Menu Section end
-const toggleButton = document.getElementById('darkModeToggle');
 
-// Check localStorage on page load
-if (localStorage.getItem('darkMode') === 'enabled') {
-    document.body.classList.add('dark-mode');
-    toggleButton.textContent = '☀ Light Mode';
+
+// Dark Mode Toggle Section Start for desktop
+{
+            const toggleButton = document.getElementById('darkModeToggle');
+
+        // Save original button content
+        const originalContent = toggleButton.innerHTML;
+
+        // Check localStorage on page load
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            document.body.classList.add('dark-mode');
+            toggleButton.innerHTML = '☀ Light Mode';
+        }
+
+        // Toggle dark mode on button click
+        toggleButton.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+
+            if (document.body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                toggleButton.innerHTML = '☀ Light Mode';
+            } else {
+                localStorage.setItem('darkMode', 'disabled');
+                toggleButton.innerHTML = originalContent; // 👈 restore what you had originally
+            }
+        });
 }
 
-// Toggle dark mode on button click
-toggleButton.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
+// dark mode toggle for phone 
+{
+// Dark Mode Toggle Section for Mobile Only
+const mobileToggle = document.getElementById('darkModeToggleMobile');
 
-    if(document.body.classList.contains('dark-mode')){
-        localStorage.setItem('darkMode', 'enabled');
-        toggleButton.textContent = '☀ Light Mode';
-    } else {
-        localStorage.setItem('darkMode', 'disabled');
-        toggleButton.textContent = '🌙 Dark Mode';
-    }
-});
+// Save original button content
+const originalMobileContent = mobileToggle ? mobileToggle.innerHTML : '';
 
+// Check localStorage on page load
+if (localStorage.getItem('darkModeMobile') === 'enabled') {
+    document.body.classList.add('dark-mode');
+    if (mobileToggle) mobileToggle.innerHTML = '<span>☀ Light Mode</span>';
+}
+
+// Toggle dark mode on mobile button click
+if (mobileToggle) {
+    mobileToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+
+        if (document.body.classList.contains('dark-mode')) {
+            localStorage.setItem('darkModeMobile', 'enabled');
+            mobileToggle.innerHTML = '<span>☀ Light Mode</span>';
+        } else {
+            localStorage.setItem('darkModeMobile', 'disabled');
+            mobileToggle.innerHTML = originalMobileContent; // restore original
+        }
+    });
+}
+
+
+}
 

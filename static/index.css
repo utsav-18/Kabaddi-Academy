@@ -80,7 +80,6 @@ nav {
     padding: 5px 8px;
     transition: 0.3s;
 }
-
 .nav-link a:hover {
     background: #facc15;
     color: #222;
@@ -160,9 +159,10 @@ nav {
         padding: 15px 20px;
         height: 60px;
         gap: 10px;
-        box-shadow: 0 2px 5px rgba(202, 254, 16, 0.203);
     }
-
+    .dark-mode .heading{
+        box-shadow: 0 2px 5px rgba(202, 254, 16, 0.414);
+    }
     .nav-link {
         display: none;
     }
@@ -184,29 +184,31 @@ nav {
         display: block;
         order: 2;
     }
-    .reg-main-container{
-    margin-top: -25px;
+    .reg-main-container {
+        align-items: flex-start;  /* push form up */
+        margin-top: 0;            /* remove negative margin hack */
     }
 }
 
 /* Registration container */
-.reg-main-container{
-    margin-top: 60px;
+.reg-main-container {
+    margin-top: 50px; /* keep desktop spacing */
     position: fixed;
     height: 100vh;
     width: 100vw;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* center vertically */
 }
-.registration-container {
 
+.registration-container {
     max-width: 500px;
     margin: 40px auto;
     background: #fff;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: background 0.3s, color 0.3s;
 }
 
 /* Title */
@@ -216,7 +218,7 @@ nav {
     margin-bottom: 20px;
 }
 
-/* Labels and inputs */
+/* Labels */
 .registration-form label {
     display: block;
     margin-bottom: 12px;
@@ -224,14 +226,26 @@ nav {
     font-weight: bold;
 }
 
+/* Inputs */
 .form-input {
     width: 100%;
-    padding: 8px 10px;
+    padding: 10px 12px;
     margin-top: 5px;
     border: 1px solid #ccc;
     border-radius: 6px;
     font-size: 14px;
+    background: #fff;
+    color: #000;
+    transition: all 0.3s ease;
 }
+
+/* Hover + Focus Effects */
+/* .form-input:hover,
+.form-input:focus {
+    border-color: #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+    outline: none;
+} */
 
 /* Button styling */
 .btn-primary {
@@ -245,6 +259,7 @@ nav {
     display: block;
     margin-top: 15px;
     width: 100%;
+    transition: background 0.3s;
 }
 
 .btn-primary:hover {
@@ -264,6 +279,32 @@ code {
     padding: 2px 4px;
     border-radius: 4px;
 }
+
+/* ============================
+   DARK MODE
+   ============================ */
+body.dark-mode .registration-container {
+    background: #111;
+    color: #fff;
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .registration-form label {
+    color: #facc15;
+}
+
+body.dark-mode .form-input {
+    background: #222;
+    color: #fff;
+    border: 1px solid #444;
+}
+
+body.dark-mode .form-input:hover,
+body.dark-mode .form-input:focus {
+    border-color: #facc15;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+}
+
 
 /* abou-us-container start */
  .about-container {
@@ -470,16 +511,16 @@ code {
         color: #333;
     }
 }
-
-/* Contact Us Page Styles */
+/* ===========================
+   CONTACT PAGE STYLES
+   =========================== */
 .contact-container {
-    max-width: 600px;
+    max-width: 650px;
     margin: 120px auto 40px;
     padding: 30px 20px;
     background: #fdfdfd;
     border-radius: 12px;
     box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    text-align: center;
     font-family: 'Poppins', sans-serif;
 }
 
@@ -487,124 +528,257 @@ code {
     font-size: 28px;
     color: #222;
     margin-bottom: 5px;
+    text-align: center;
 }
 
 .contact-subtitle {
     font-size: 16px;
     color: #555;
     margin-bottom: 25px;
+    text-align: center;
 }
 
-.contact-icons {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 20px;
-}
-
-.contact-btn {
+.contact-rows {
     display: flex;
     flex-direction: column;
+    gap: 15px;
+}
+
+/* Row styling */
+.contact-row {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    color: #fff;
+    gap: 12px;
+    background: #f9f9f9;
+    padding: 12px 18px;
+    border-radius: 8px;
+    transition: 0.3s ease;
+    font-size: 16px;
+}
+
+.contact-row i {
+    font-size: 20px;
+}
+
+.contact-row a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: inherit;
     text-decoration: none;
-    font-size: 24px;
-    transition: transform 0.3s, box-shadow 0.3s;
-    position: relative;
+    width: 100%;
 }
 
-.contact-btn span {
-    font-size: 12px;
-    margin-top: 5px;
+/* Hover effect */
+.contact-row:hover {
+    background: #eee;
+    transform: translateX(4px);
 }
 
-/* Colors for each platform */
-.contact-btn.phone { background: #0a74da; }
-.contact-btn.whatsapp { background: #25D366; }
-.contact-btn.insta { background: #E1306C; }
-.contact-btn.email { background: #FF5722; }
+/* Platform colors */
+.contact-row.phone i { color: #0a74da; }
+.contact-row.whatsapp i { color: #25D366; }
+.contact-row.insta i { color: #E1306C; }
+.contact-row.youtube i { color: #FF0000; }
+.contact-row.email i { color: #FF5722; }
+.contact-row.address i { color: #6C63FF; }
 
-.contact-btn:hover {
-    transform: scale(1.15);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+/* CTA line */
+.contact-cta {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #facc15;
+    text-align: center;
 }
 
-/* Responsive for phones */
+/* Responsive */
 @media (max-width: 480px) {
     .contact-container {
         margin: 80px 15px 30px;
         padding: 20px;
     }
 
-    .contact-btn {
-        width: 70px;
-        height: 70px;
-        font-size: 20px;
+    .contact-row {
+        font-size: 14px;
+        padding: 10px 14px;
     }
 
-    .contact-btn span {
-        font-size: 10px;
+    .contact-row i {
+        font-size: 18px;
     }
 }
 
+/* ===========================
+   LIGHT MODE (default)
+   =========================== */
 
-/* dark button  start*/ 
+/* Mobile button styling */
+.mobile-menu ul li button.dark-mode-btn {
+    width: 100%;
+    text-decoration: none;
+    color: white;
+    font-size: 15px;
+    padding: 10px 15px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.032);
+    transition: 0.4s ease;
+    display: block;
+    text-align: left;
+}
+
+/* General dark mode toggle button */
 .dark-mode-btn {
     background: #facc15;
     color: #000;
     border: none;
     border-radius: 6px;
-    padding: 8px 12px;
+    padding: 3px 7px;
     cursor: pointer;
     transition: background 0.3s, color 0.3s;
-    font-size: 14px;
+    font-size: 12px;
 }
-
+.dark-mode-btn span {
+    text-shadow: #000 0px 1px 3px;
+}
 .dark-mode-btn:hover {
     background: #eab308;
 }
+
+/* ===========================
+   DARK MODE
+   =========================== */
 body.dark-mode {
     background-color: #000;
     color: #fff;
 }
 
+/* Headers & containers */
 body.dark-mode .heading {
     background-color: #111;
     color: #fff;
+    box-shadow: 0 2px 5px rgba(250, 204, 21, 0.4);
 }
-
 body.dark-mode .registration-container,
 body.dark-mode .contact-container,
 body.dark-mode .about-right > div,
 body.dark-mode .student-table {
     background-color: #111;
     color: #fff;
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
+    transition: all 0.3s ease;
 }
 
+/* Navbar & links */
 body.dark-mode .nav-link a,
 body.dark-mode .student-table a {
     color: #facc15;
 }
 
+/* Dark mode button in dark theme */
 body.dark-mode .dark-mode-btn {
     background: #222;
     color: #facc15;
 }
+body.dark-mode .dark-mode-btn span {
+    text-shadow: 0 0 6px #facc15; /* glow effect */
+}
+
+/* Mobile menu in dark mode */
 body.dark-mode .mobile-menu {
-    background-color: #111; /* Dark background for menu */
-    color: #fff; /* Text color */
+    background-color: #111;
+    color: #fff;
 }
-
 body.dark-mode .mobile-menu a {
-    color: #facc15; /* Links color in dark mode */
+    color: #facc15;
 }
-
 body.dark-mode .close-btn i {
-    color: #fff; /* Close icon color */
+    color: #fff;
 }
 
-/* dark button off */
+/* Forms */
+body.dark-mode .form-title,
+body.dark-mode label {
+    color: #fff;
+}
+body.dark-mode input {
+    background-color: #1a1a1a;
+    color: #facc15;
+    border: 1px solid #333;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.4);
+    transition: all 0.3s ease;
+}
+body.dark-mode input:focus {
+    box-shadow: 0 0 12px rgba(250, 204, 21, 0.8);
+    outline: none;
+}
+
+/* Tables */
+body.dark-mode tr:hover {
+    background-color: #333;
+}
+
+/* Hover effects for headings */
+body.dark-mode h1,
+body.dark-mode h2 {
+    color: #fff;
+}
+body.dark-mode h2:hover,
+body.dark-mode h1:hover {
+    text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+    transition: text-shadow 0.3s ease;
+}
+
+/* Paragraph text */
+body.dark-mode p {
+    color: #c1bebe;
+}
+
+/* ===========================
+   CONTACT PAGE (Row Layout)
+   =========================== */
+body.dark-mode .contact-row {
+    background: #1a1a1a;
+    color: #eee;
+    border: 1px solid #333;
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.25);
+    transition: all 0.3s ease;
+}
+body.dark-mode .contact-row:hover {
+    background: #222;
+    transform: translateX(6px);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.6);
+}
+
+/* Keep icons colored in dark mode + glow */
+body.dark-mode .contact-row.phone i { color: #0a74da; text-shadow: 0 0 8px #0a74da; }
+body.dark-mode .contact-row.whatsapp i { color: #25D366; text-shadow: 0 0 8px #25D366; }
+body.dark-mode .contact-row.insta i { color: #E1306C; text-shadow: 0 0 8px #E1306C; }
+body.dark-mode .contact-row.youtube i { color: #FF0000; text-shadow: 0 0 8px #FF0000; }
+body.dark-mode .contact-row.email i { color: #FF5722; text-shadow: 0 0 8px #FF5722; }
+body.dark-mode .contact-row.address i { color: #facc15; text-shadow: 0 0 8px #facc15; }
+
+
+/* === MOBILE OVERRIDE (put this LAST) === */
+@media (max-width: 768px) {
+  .reg-main-container {
+    /* push form higher on phone */
+    align-items: flex-start !important;   /* beat the base rule */
+    position: fixed;                      /* keep your full-screen modal vibe */
+    top: 85px;                            /* header height + a lil spacing */
+    left: 0; right: 0;
+
+    /* use dynamic viewport units to avoid mobile URL bar bugs */
+    height: calc(100dvh - 72px);
+    margin-top: 0 !important;             /* kill the desktop margin */
+    padding-top: 0;
+    justify-content: center;              /* center horizontally via flex parent */
+  }
+
+  .registration-container {
+    margin: 0 16px;       /* comfy side padding on phones */
+    width: 100%;
+    max-width: 520px;     /* optional: keep it tidy */
+  }
+}
+
+
