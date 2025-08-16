@@ -14,61 +14,44 @@
 }
 
 
-// Dark Mode Toggle Section Start for desktop
+// // Dark Mode Toggle Section Start for desktop and phone
 {
-            const toggleButton = document.getElementById('darkModeToggle');
 
-        // Save original button content
-        const originalContent = toggleButton.innerHTML;
+// Dark Mode Toggle (works for both desktop & mobile)
 
-        // Check localStorage on page load
-        if (localStorage.getItem('darkMode') === 'enabled') {
-            document.body.classList.add('dark-mode');
-            toggleButton.innerHTML = '☀ Light Mode';
-        }
-
-        // Toggle dark mode on button click
-        toggleButton.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-
-            if (document.body.classList.contains('dark-mode')) {
-                localStorage.setItem('darkMode', 'enabled');
-                toggleButton.innerHTML = '☀ Light Mode';
-            } else {
-                localStorage.setItem('darkMode', 'disabled');
-                toggleButton.innerHTML = originalContent; // 👈 restore what you had originally
-            }
-        });
-}
-
-// dark mode toggle for phone 
-{
-// Dark Mode Toggle Section for Mobile Only
+// Get desktop & mobile toggle buttons
+const desktopToggle = document.getElementById('darkModeToggle');
 const mobileToggle = document.getElementById('darkModeToggleMobile');
 
 // Save original button content
+const originalDesktopContent = desktopToggle ? desktopToggle.innerHTML : '';
 const originalMobileContent = mobileToggle ? mobileToggle.innerHTML : '';
 
 // Check localStorage on page load
-if (localStorage.getItem('darkModeMobile') === 'enabled') {
+if (localStorage.getItem('darkMode') === 'enabled') {
     document.body.classList.add('dark-mode');
+    if (desktopToggle) desktopToggle.innerHTML = '☀ Light Mode';
     if (mobileToggle) mobileToggle.innerHTML = '<span>☀ Light Mode</span>';
 }
 
-// Toggle dark mode on mobile button click
-if (mobileToggle) {
-    mobileToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
+// Function to toggle dark mode
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
 
-        if (document.body.classList.contains('dark-mode')) {
-            localStorage.setItem('darkModeMobile', 'enabled');
-            mobileToggle.innerHTML = '<span>☀ Light Mode</span>';
-        } else {
-            localStorage.setItem('darkModeMobile', 'disabled');
-            mobileToggle.innerHTML = originalMobileContent; // restore original
-        }
-    });
+    if (document.body.classList.contains('dark-mode')) {
+        localStorage.setItem('darkMode', 'enabled');
+        if (desktopToggle) desktopToggle.innerHTML = '☀ Light Mode';
+        if (mobileToggle) mobileToggle.innerHTML = '<span>☀ Light Mode</span>';
+    } else {
+        localStorage.setItem('darkMode', 'disabled');
+        if (desktopToggle) desktopToggle.innerHTML = originalDesktopContent;
+        if (mobileToggle) mobileToggle.innerHTML = originalMobileContent;
+    }
 }
+
+// Add event listeners
+if (desktopToggle) desktopToggle.addEventListener('click', toggleDarkMode);
+if (mobileToggle) mobileToggle.addEventListener('click', toggleDarkMode);
 
 
 }
