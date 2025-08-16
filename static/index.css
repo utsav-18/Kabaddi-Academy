@@ -608,3 +608,391 @@ body.dark-mode .close-btn i {
 }
 
 /* dark button off */
+ /* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+  }
+  
+  body {
+    background: #000;
+    color: #fff;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  
+  /* Hero Section */
+  .hero {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  /* Slider Images */
+  .hero-slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .hero-slider img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+  
+  .hero-slider img.active {
+    opacity: 1;
+  }
+  
+  /* Overlay Content */
+  .hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .hero-content {
+    text-align: center;
+    max-width: 700px;
+    padding: 20px;
+  }
+  
+  .hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  
+  .hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+  }
+  
+  /* Buttons */
+  .hero-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+  }
+  
+  .btn {
+    padding: 12px 25px;
+    background: #e63946;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+  
+  .btn:hover {
+    background: #ff4d6d;
+    transform: scale(1.05);
+  }
+  
+  .btn-outline {
+    background: transparent;
+    border: 2px solid #fff;
+  }
+  
+  .btn-outline:hover {
+    background: #fff;
+    color: #000;
+  }
+  
+  /* Coaches Section */
+  .coaches {
+    padding: 60px 20px;
+    text-align: center;
+    background: #111;
+}
+
+.coaches h2 {
+    font-size: 2.2rem;
+    margin-bottom: 40px;
+    color: #eab308;
+    animation: fadeInDown 1s ease-in-out;
+}
+
+/* Container */
+.coaches-container {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    flex-wrap: wrap;
+    background: #111;
+}
+
+/* Individual Card */
+.coach-card {
+    background: #f1f1f1;
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 300px;
+    animation: fadeInUp 1s ease-in-out;
+}
+
+.coach-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Coach Image */
+.coach-card img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    border-bottom: 4px solid #ff6600;
+    transition: transform 0.4s ease-in-out;
+}
+
+.coach-card img:hover {
+    transform: scale(1.05);
+}
+
+/* Text */
+.coach-card h3 {
+    font-size: 1.3rem;
+    margin: 15px 0 10px;
+    color: #333;
+}
+
+.coach-card p {
+    font-size: 1rem;
+    color: #555;
+    padding: 0 15px 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .coaches-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .coach-card {
+        width: 90%;
+        max-width: 400px;
+    }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Hostel & Training Section */
+.hostel-training {
+    padding: 60px 20px;
+    background: #111;
+    text-align: center;
+}
+
+.hostel-training h2 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #facc15;
+}
+
+.facilities-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.facility-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.1);
+    max-width: 350px;
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.3s ease;
+}
+
+.facility-card:hover {
+    transform: translateY(-8px);
+}
+
+.facility-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.facility-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 10px;
+    color: #e63946;
+}
+
+.facility-card p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.price span {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #1d3557;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .facilities-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .facility-card {
+        width: 90%;
+    }
+}
+
+/* ===== Gallery Section ===== */
+ /* ===== Performance Highlights / Gallery ===== */
+.gallery {
+    background: #111; /* dark background */
+    color: #fff;
+    text-align: center;
+    padding: 50px 20px;
+  }
+  
+  .gallery-header h2 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    color: #ffcc00;
+  }
+  
+  .gallery-header p {
+    font-size: 1rem;
+    margin-bottom: 30px;
+    color: #ddd;
+  }
+  
+  /* Carousel container */
+  .carousel-container {
+    position: relative;
+    overflow: hidden;
+    max-width: 1000px;
+    margin: auto;
+    border-radius: 10px;
+    background: #f1f1f1;
+    padding: 20px;
+  }
+  
+  /* Track for images */
+  .carousel-track {
+    display: flex;
+    transition: transform 0.6s ease-in-out;
+  }
+  
+  /* Images */
+  .carousel-track img {
+    width: 250px;
+    height: 160px;
+    object-fit: cover;
+    margin: 0 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+  }
+  
+  .carousel-track img:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  
+  /* Buttons */
+  .carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ffcc00;
+    border: none;
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 50%;
+    color: #111;
+    transition: 0.3s;
+  }
+  
+  .carousel-btn:hover {
+    background: #fff;
+    color: #000;
+  }
+  
+  .prev {
+    left: 10px;
+  }
+  
+  .next {
+    right: 10px;
+  }
+  
+  /* ===== Mobile Responsive ===== */
+  @media (max-width: 768px) {
+    .carousel-track img {
+      width: 180px;
+      height: 120px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .carousel-track img {
+      width: 140px;
+      height: 100px;
+      margin: 0 5px;
+    }
+  
+    .gallery-header h2 {
+      font-size: 1.5rem;
+    }
+  
+    .gallery-header p {
+      font-size: 0.9rem;
+    }
+  }
+  
