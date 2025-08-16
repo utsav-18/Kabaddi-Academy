@@ -76,7 +76,9 @@ if (mobileToggle) {
 // home page 
  // Hero Slider Auto Change
 {
-  let currentSlide = 0;
+// home page 
+ // Hero Slider Auto Change
+let currentSlide = 0;
 const slides = document.querySelectorAll(".hero-slider img");
 
 function changeSlide() {
