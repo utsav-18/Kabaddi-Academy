@@ -45,7 +45,7 @@ def login():
     return render_template('login.html')
 
 # ==============================
-# New merged Registration + Payment
+# New merged Registration+Payment
 # ==============================
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
