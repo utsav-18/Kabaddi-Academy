@@ -13,7 +13,7 @@
                     <th>Class</th>
                     <th>Academy Join</th>
                     <th>Mobile No.</th>
-                    <th>Actions</th>
+                    <!-- <th>Actions</th> -->
                 </tr>
             </thead>
             <tbody>
@@ -26,10 +26,10 @@
                     <td data-label="Class">{{ student['Class'] }}</td>
                     <td data-label="Academy Join">{{ student['Academy Join'] }}</td>
                     <td data-label="Mobile No.">{{ student['Mobile No.'] }}</td>
-                    <td data-label="Actions">
+                    <!-- <td data-label="Actions">
                         <a href="{{ url_for('edit_student', sno=student['S.No']) }}">Edit</a> |
                         <a href="{{ url_for('delete_student', sno=student['S.No']) }}" onclick="return confirm('Are you sure?');">Delete</a>
-                    </td>
+                    </td> -->
                 </tr>
                 {% endfor %}
             </tbody>

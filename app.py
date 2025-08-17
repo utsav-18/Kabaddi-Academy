@@ -126,9 +126,9 @@ def delete_student(sno):
         writer.writerows(students)
     return redirect(url_for('dashboard'))
 
-@app.route('/sports')
-def sports():
-    return render_template('sports.html')
+@app.route('/news')
+def news():
+    return render_template('news.html')
 
 @app.route('/achievements')
 def achievements():
