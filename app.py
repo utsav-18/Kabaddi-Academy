@@ -45,14 +45,14 @@ def login():
     return render_template('login.html')
 
 # ==============================
-# New merged Registration+Payment
+# Registration + Payment Route
 # ==============================
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
     if request.method == 'POST':
         data = request.get_json()
 
-        # Find the next S.No
+        # Find next S.No
         sno = 1
         if os.path.exists('data/students.csv'):
             with open('data/students.csv', newline='', encoding='utf-8') as csvfile:
@@ -61,6 +61,7 @@ def registration():
                 if snos:
                     sno = max(snos) + 1
 
+        # Prepare student record
         student = {
             'S.No': str(sno),
             'Name': data.get('name'),
@@ -68,20 +69,28 @@ def registration():
             'DOB': data.get('dob'),
             'Class': data.get('class'),
             'Academy Join': data.get('academy_join'),
+            'Duration': data.get('duration'),
             'Mobile No.': data.get('contact'),
+            'Aadhaar': data.get('aadhaar'),
             'Payment ID': data.get('payment_id')
         }
 
+        # Ensure data directory exists
         os.makedirs('data', exist_ok=True)
+
+        # Save to CSV
         file_exists = os.path.isfile('data/students.csv')
         with open('data/students.csv', 'a', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['S.No', 'Name', 'Father Name', 'DOB', 'Class', 'Academy Join', 'Mobile No.', 'Payment ID']
+            fieldnames = [
+                'S.No', 'Name', 'Father Name', 'DOB', 'Class',
+                'Academy Join', 'Duration', 'Mobile No.', 'Aadhaar', 'Payment ID'
+            ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             if not file_exists:
                 writer.writeheader()
             writer.writerow(student)
 
-        return jsonify({'status': 'success', 'message': 'Registered and payment saved.'})
+        return jsonify({'success': True, 'message': 'Registered and payment saved.'})
 
     return render_template('registration_payment.html')
 
@@ -102,12 +111,19 @@ def edit_student(sno):
         student['DOB'] = request.form.get('dob')
         student['Class'] = request.form.get('class')
         student['Academy Join'] = request.form.get('academy_join')
+        student['Duration'] = request.form.get('duration')
         student['Mobile No.'] = request.form.get('contact')
+        student['Aadhaar'] = request.form.get('aadhaar')
+
         with open('data/students.csv', 'w', newline='', encoding='utf-8') as csvfile:
-            fieldnames = ['S.No', 'Name', 'Father Name', 'DOB', 'Class', 'Academy Join', 'Mobile No.', 'Payment ID']
+            fieldnames = [
+                'S.No', 'Name', 'Father Name', 'DOB', 'Class',
+                'Academy Join', 'Duration', 'Mobile No.', 'Aadhaar', 'Payment ID'
+            ]
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(students)
+
         return redirect(url_for('dashboard'))
     return render_template('edit_student.html', student=student)
 
@@ -119,11 +135,16 @@ def delete_student(sno):
         for row in reader:
             students.append(row)
     students = [s for s in students if s['S.No'] != sno]
+
     with open('data/students.csv', 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['S.No', 'Name', 'Father Name', 'DOB', 'Class', 'Academy Join', 'Mobile No.', 'Payment ID']
+        fieldnames = [
+            'S.No', 'Name', 'Father Name', 'DOB', 'Class',
+            'Academy Join', 'Duration', 'Mobile No.', 'Aadhaar', 'Payment ID'
+        ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(students)
+
     return redirect(url_for('dashboard'))
 
 @app.route('/news')

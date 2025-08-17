@@ -5,54 +5,60 @@
 {% block content %}
 
 <div class="reg-main-container">
-        
-        <div class="registration-container">
+    <div class="registration-container">
+        <h1 class="form-title">Register & Pay</h1>
 
-            <h1 class="form-title">Register & Pay</h1>
+        <form id="regForm" class="registration-form">
+            <label>
+                Name:
+                <input type="text" name="name" class="form-input" required>
+            </label>
 
-            <form id="regForm" class="registration-form">
-                <label>
-                    Name:
-                    <input type="text" name="name" class="form-input" required>
-                </label>
+            <label>
+                Father Name:
+                <input type="text" name="father_name" class="form-input">
+            </label>
 
-                <label>
-                    Father Name:
-                    <input type="text" name="father_name" class="form-input">
-                </label>
+            <label>
+                DOB:
+                <input type="date" name="dob" class="form-input">
+            </label>
 
-                <label>
-                    DOB:
-                    <input type="date" name="dob" class="form-input">
-                </label>
+            <label>
+                Class:
+                <input type="text" name="class" class="form-input">
+            </label>
 
-                <label>
-                    Class:
-                    <input type="text" name="class" class="form-input">
-                </label>
+            <label>
+                Academy Join Date:
+                <input type="date" name="academy_join" class="form-input" required>
+            </label>
 
-                <label>
-                    Academy Join:
-                    <input type="text" name="academy_join" class="form-input">
-                </label>
+            <label>
+                Duration (e.g. 6 months, 1 year):
+                <input type="text" name="duration" class="form-input" placeholder="e.g. 6 months" required>
+            </label>
 
-                <label>
-                    Mobile No.:
-                    <input type="text" name="contact" class="form-input" required>
-                </label>
+            <label>
+                Mobile No.:
+                <input type="text" name="contact" class="form-input" maxlength="10" required>
+            </label>
 
-                <button type="button" id="payBtn" class="btn-primary">
-                    Pay ₹1 & Register
-                </button>
-            </form>
+            <label>
+                Aadhaar Number:
+                <input type="text" name="aadhaar" class="form-input" maxlength="14" required>
+            </label>
 
-            <p class="test-mode-info">
-                <strong>Test Mode —</strong> Use card <code>4111 1111 1111 1111</code>, any future expiry, CVV <code>123</code>
-            </p>
-        </div>
+            <button type="button" id="payBtn" class="btn-primary">
+                Pay ₹1 & Register
+            </button>
+        </form>
 
+        <p class="test-mode-info">
+            <strong>Test Mode —</strong> Use card <code>4111 1111 1111 1111</code>, any future expiry, CVV <code>123</code>
+        </p>
+    </div>
 </div>
-
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
@@ -60,20 +66,37 @@ document.getElementById("payBtn").addEventListener("click", function() {
     const form = document.getElementById("regForm");
     const name = form.elements['name'].value.trim();
     const contact = form.elements['contact'].value.trim();
+    const aadhaarRaw = form.elements['aadhaar'] ? form.elements['aadhaar'].value.replace(/\s+/g, '') : "";
+    const duration = form.elements['duration'].value.trim();
+    const academyJoin = form.elements['academy_join'].value.trim();
 
-    // Check if required fields are filled
-    if (!name || !contact) {
-        alert("Please fill in all the details before proceeding to payment.");
+    // Check required fields
+    if (!name || !contact || !aadhaarRaw || !duration || !academyJoin) {
+        alert("Please fill in all required fields before proceeding.");
         return;
     }
 
+    // Aadhaar validation (must be 12 digits)
+    if (!/^\d{12}$/.test(aadhaarRaw)) {
+        alert("Please enter a valid 12-digit Aadhaar number.");
+        return;
+    }
+
+    // Contact validation (10 digits)
+    if (!/^\d{10}$/.test(contact)) {
+        alert("Please enter a valid 10-digit mobile number.");
+        return;
+    }
+
+    // Prepare form data
     const formData = new FormData(form);
     let data = {};
     formData.forEach((v, k) => data[k] = v);
+    data.aadhaar = aadhaarRaw; // send only digits
 
     const options = {
-        key: "rzp_test_XbnqrIC7Y9cJV0",
-        amount: 100,
+        key: "rzp_test_XbnqrIC7Y9cJV0", // test key
+        amount: 100, // ₹1 (100 paise)
         currency: "INR",
         name: "KVS Kabaddi Academy",
         description: "Admission Fee",
@@ -93,13 +116,42 @@ document.getElementById("payBtn").addEventListener("click", function() {
             })
             .then(r => r.json())
             .then(res => {
-                alert("Registration & Payment Successful!");
-                window.location.href = "/dashboard";
+                if (res.success) {
+                    alert("Registration & Payment Successful!");
+                    window.location.href = "/dashboard";
+                } else {
+                    alert("Server rejected payment. Please contact support.");
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Something went wrong while saving registration.");
             });
         }
     };
+
     const rzp = new Razorpay(options);
+
+    // Handle payment failures
+    rzp.on("payment.failed", function (response) {
+        alert("Payment Failed: " + response.error.description);
+    });
+
     rzp.open();
+});
+
+// Aadhaar auto-formatting as XXXX XXXX XXXX
+document.addEventListener("DOMContentLoaded", function() {
+    const aadhaarInput = document.querySelector("input[name='aadhaar']");
+    if (aadhaarInput) {
+        aadhaarInput.addEventListener("input", function(e) {
+            let value = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/g, ""); // digits only
+            if (value.length > 12) value = value.slice(0, 12); // max 12 digits
+
+            // Format as XXXX XXXX XXXX
+            e.target.value = value.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+        });
+    }
 });
 </script>
 

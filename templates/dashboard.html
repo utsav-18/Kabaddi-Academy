@@ -11,8 +11,10 @@
                     <th>Father Name</th>
                     <th>DOB</th>
                     <th>Class</th>
-                    <th>Academy Join</th>
+                    <th>Academy Join Date</th>
+                    <th>Duration</th>
                     <th>Mobile No.</th>
+                    <th>Aadhaar Number</th>
                     <!-- <th>Actions</th> -->
                 </tr>
             </thead>
@@ -24,8 +26,19 @@
                     <td data-label="Father Name">{{ student['Father Name'] }}</td>
                     <td data-label="DOB">{{ student['DOB'] }}</td>
                     <td data-label="Class">{{ student['Class'] }}</td>
-                    <td data-label="Academy Join">{{ student['Academy Join'] }}</td>
+                    <td data-label="Academy Join Date">{{ student['Academy Join'] }}</td>
+                    
+                    {# ✅ Duration - auto calculate if backend sends it #}
+                    <td data-label="Duration">
+                        {% if student['Duration'] %}
+                            {{ student['Duration'] }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+
                     <td data-label="Mobile No.">{{ student['Mobile No.'] }}</td>
+                    <td data-label="Aadhaar Number">{{ student['Aadhaar'] }}</td>
                     <!-- <td data-label="Actions">
                         <a href="{{ url_for('edit_student', sno=student['S.No']) }}">Edit</a> |
                         <a href="{{ url_for('delete_student', sno=student['S.No']) }}" onclick="return confirm('Are you sure?');">Delete</a>

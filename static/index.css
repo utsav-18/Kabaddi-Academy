@@ -266,7 +266,6 @@ nav {
   
   .btn {
     padding: 12px 25px;
-    background: #e63946;
     color: #fff;
     border: none;
     border-radius: 25px;
@@ -573,8 +572,8 @@ nav {
 /* Registration container */
 .reg-main-container {
     margin-top: 50px; /* keep desktop spacing */
-    position: fixed;
-    height: 100vh;
+    position:absolute;
+    height: 120vh;
     width: 100vw;
     display: flex;
     justify-content: center;
@@ -701,16 +700,13 @@ body.dark-mode .form-input:focus {
 .about-header h2 {
     font-size: 2.2rem;
     font-weight: bold;
-    color: #FFD700; /* Yellow highlight */
+    color: #000; 
     border-bottom: 4px solid #FFD700;
     display: inline-block;
     padding-bottom: 8px;
     transition: text-shadow 0.3s ease;
 }
 
-.about-header h2:hover {
-    text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
-}
 
 .about-content {
     display: flex;
@@ -1112,6 +1108,9 @@ body.dark-mode h1:hover {
 body.dark-mode p {
     color: #c1bebe;
 }
+body.dark-mode .nav-link a:hover {
+    color: #000;
+}
 
 /* ===========================
    CONTACT PAGE (Row Layout)
@@ -1143,12 +1142,12 @@ body.dark-mode .contact-row.address i { color: #facc15; text-shadow: 0 0 8px #fa
   .reg-main-container {
     /* push form higher on phone */
     align-items: flex-start !important;   /* beat the base rule */
-    position: fixed;                      /* keep your full-screen modal vibe */
-    top: 85px;                            /* header height + a lil spacing */
+    position: absolute;                      /* keep your full-screen modal vibe */
+    top: 80px;                            /* header height + a lil spacing */
     left: 0; right: 0;
 
     /* use dynamic viewport units to avoid mobile URL bar bugs */
-    height: calc(100dvh - 72px);
+    height: calc(108dvh - 72px);
     margin-top: 0 !important;             /* kill the desktop margin */
     padding-top: 0;
     justify-content: center;              /* center horizontally via flex parent */

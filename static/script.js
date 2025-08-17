@@ -59,8 +59,9 @@ if (mobileToggle) mobileToggle.addEventListener('click', toggleDarkMode);
 // home page 
  // Hero Slider Auto Change
 {
-// home page 
- // Hero Slider Auto Change
+// ==========================
+// Hero Slider Auto Change (Every 5s)
+// ==========================
 let currentSlide = 0;
 const slides = document.querySelectorAll(".hero-slider img");
 
@@ -72,28 +73,40 @@ function changeSlide() {
     }
   });
 
+  // move to next slide
   currentSlide = (currentSlide + 1) % slides.length;
 }
 
+// run first immediately so one is visible
+if (slides.length > 0) {
+  changeSlide();
+  setInterval(changeSlide, 5000); // every 5s
+}
+
+// ==========================
+// Carousel With Buttons
+// ==========================
 const track = document.querySelector(".carousel-track");
 const prevBtn = document.querySelector(".prev");
 const nextBtn = document.querySelector(".next");
 
-let index = 0;
-const imgWidth = 270; // image width + margin
+if (track && prevBtn && nextBtn) {
+  let index = 0;
+  const imgWidth = 270; // image width + margin (adjust if needed)
 
-nextBtn.addEventListener("click", () => {
-  if (index < track.children.length - 1) {
-    index++;
-    track.style.transform = `translateX(-${index * imgWidth}px)`;
-  }
-});
+  nextBtn.addEventListener("click", () => {
+    if (index < track.children.length - 1) {
+      index++;
+      track.style.transform = `translateX(-${index * imgWidth}px)`;
+    }
+  });
 
-prevBtn.addEventListener("click", () => {
-  if (index > 0) {
-    index--;
-    track.style.transform = `translateX(-${index * imgWidth}px)`;
-  }
-});
+  prevBtn.addEventListener("click", () => {
+    if (index > 0) {
+      index--;
+      track.style.transform = `translateX(-${index * imgWidth}px)`;
+    }
+  });
+}
 
 }

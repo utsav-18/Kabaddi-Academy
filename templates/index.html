@@ -68,8 +68,8 @@
                 <div class="hero-slider">
                     <img src="{{ url_for('static', filename='kvs1.jpg') }}" class="slide active" alt="Kabaddi 1">
                     <img src="{{ url_for('static', filename='kvs2.jpg') }}" class="slide" alt="Kabaddi 2">
-                    <img src="{{ url_for('static', filename='kvs10.jpg') }}" class="slide" alt="Kabaddi 3">
-                    <img src="{{ url_for('static', filename='kvs6.jpg') }}" class="slide" alt="Kabaddi 4">
+                    <img src="{{ url_for('static', filename='kvs3.jpg') }}" class="slide" alt="Kabaddi 3">
+                    <img src="{{ url_for('static', filename='kvs4.jpg') }}" class="slide" alt="Kabaddi 4">
                 </div>
         
                 <!-- Overlay Content -->
@@ -79,8 +79,7 @@
                         <p>Train Like a Pro. Play Like a Champion.</p>
                         <p>Join KVS Kabaddi Academy, Jodhpur – Home of National-Level Players.</p>
                         <div class="hero-buttons">
-                            <a href="#admission" class="btn">Join Now</a>
-                            <a href="#programs" class="btn btn-outline">View Programs</a>
+                            <a href="{{ url_for('registration') }}" class="btn btn-outline">Register Now</a>
                         </div>
                     </div>
                 </div>
