@@ -8,55 +8,77 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
 </head>
 <body>
- 
-        <div class="heading">
-            <div id="log-img">
-                <img src="{{ url_for('static', filename='kvslogo.png') }}" alt="KVS Sports Academy Logo" />
-            </div>
-            <div class="menu-btn" id="menu-btn">
-                <i class="ri-menu-line"></i>
-            </div>
-            <div class="title">
-                <h1>KVS Kabaddi Academy</h1>
-            </div>  
-            <div class="nav-link">
-                <nav>
+  
+    <div class="heading">
+        <div id="log-img">
+            <img src="{{ url_for('static', filename='kvslogo.png') }}" alt="KVS Sports Academy Logo" />
+        </div>
+        <div class="menu-btn" id="menu-btn">
+            <i class="ri-menu-line"></i>
+        </div>
+        <div class="title">
+            <h1>KVS Kabaddi Academy</h1>
+        </div>  
+
+        <div class="nav-link">
+            <nav>
                 <a href="{{ url_for('home') }}">Home</a>
                 <a href="{{ url_for('about') }}">About Us</a>
                 <a href="{{ url_for('news') }}">News & Events</a>
-                <!-- <a href="{{ url_for('admission') }}">Admission</a> -->
                 <a href="{{ url_for('achievements') }}">Achievements</a>
                 <a href="{{ url_for('contact') }}">Contact Us</a>
                 <a href="{{ url_for('dashboard') }}">Dashboard</a> 
-                <a href="{{ url_for('registration') }}">Register</a> 
+
+                <!-- ✅ Register only works if logged in -->
+                <a href="{% if session.get('user_id') %}{{ url_for('registration') }}{% else %}{{ url_for('login') }}{% endif %}">
+                    Register
+                </a> 
+
+                <!-- ✅ Show login/signup if not logged in, else show logout -->
+                {% if session.get('user_id') %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    <a href="{{ url_for('signup') }}">Sign Up</a>
+                {% endif %}
+
                 <button id="darkModeToggle" class="dark-mode-btn"><span>🌙</span> Dark Mode</button>
-
-                <!-- <a href="{{ url_for('login') }}">Login</a> -->
             </nav>
-                
-            </div>
         </div>
+    </div>
 
-        <div class="mobile-menu" id="mobile-menu">
-            <div class="close-btn" id="close-btn">
-                <i class="ri-close-line"></i>
-            </div>
-            <ul>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('registration') }}">Register</a></li>
-                <li><a href="{{ url_for('about') }}">About Us</a></li>
-                <li><a href="{{ url_for('news') }}">News & Events</a></li>
-                <!-- <li><a href="{{ url_for('admission') }}">Admission</a></li> -->
-                <li><a href="{{ url_for('achievements') }}">Achievements</a></li>
-                <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
-                <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-                <li>
-                    <button class="dark-mode-btn" id="darkModeToggleMobile">
-                        <span>☾ Dark Mode</span>
-                    </button>
-                </li>
-            </ul>
+    <div class="mobile-menu" id="mobile-menu">
+        <div class="close-btn" id="close-btn">
+            <i class="ri-close-line"></i>
         </div>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li>
+                <a href="{% if session.get('user_id') %}{{ url_for('registration') }}{% else %}{{ url_for('login') }}{% endif %}">
+                    Register
+                </a>
+            </li>
+            <li><a href="{{ url_for('about') }}">About Us</a></li>
+            <li><a href="{{ url_for('news') }}">News & Events</a></li>
+            <li><a href="{{ url_for('achievements') }}">Achievements</a></li>
+            <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
+            <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+
+            <!-- ✅ Auth buttons -->
+            {% if session.get('user_id') %}
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+                <li><a href="{{ url_for('login') }}">Login</a></li>
+                <li><a href="{{ url_for('signup') }}">Sign Up</a></li>
+            {% endif %}
+
+            <li>
+                <button class="dark-mode-btn" id="darkModeToggleMobile">
+                    <span>☾ Dark Mode</span>
+                </button>
+            </li>
+        </ul>
+    </div>
 
         <div class="overlapping-bg"></div>
 

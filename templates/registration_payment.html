@@ -41,12 +41,16 @@
 
             <label>
                 Mobile No.:
-                <input type="text" name="contact" class="form-input" maxlength="10" required>
+                <input type="text" name="contact" class="form-input" 
+                    maxlength="10" inputmode="numeric" required
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </label>
 
             <label>
                 Aadhaar Number:
-                <input type="text" name="aadhaar" class="form-input" maxlength="14" required>
+                <input type="text" name="aadhaar" class="form-input" 
+                    maxlength="14" inputmode="numeric" required
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
             </label>
 
             <button type="button" id="payBtn" class="btn-primary">
