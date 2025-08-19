@@ -1,1 +1,1 @@
-gunicorn kvsacademy:app
+gunicorn app:app
