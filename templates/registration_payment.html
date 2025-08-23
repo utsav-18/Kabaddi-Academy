@@ -2,6 +2,8 @@
 {% block title %}Register & Pay - KVS Kabaddi Academy{% endblock %}
 {% block content %}
 
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+
 <div class="reg-main-container">
   <div class="registration-container">
     <h1 class="form-title">Register & Pay</h1>
@@ -31,7 +33,18 @@ document.addEventListener("DOMContentLoaded", function () {
   const setMsg = (t) => { if (msgEl) msgEl.textContent = t || ""; console.log("[UI]", t); };
 
   // === API CONFIG ===
-  const API_BASE = "https://www.kvsacademy.org";   // change only if your backend is on a different host
+  const host = location.hostname;
+  const isLocal =
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    /^10\.\d+\.\d+\.\d+$/.test(host) ||
+    /^192\.168\.\d+\.\d+$/.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(host);
+
+  // Use local backend during local testing; same-origin in prod deployment
+ const API_BASE = location.origin;   // in production
+
+
   const PATH_CREATE = "/create_order";
   const PATH_VERIFY = "/verify-payment";
   const PATH_REGISTER = "/registration";

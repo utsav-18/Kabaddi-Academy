@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session, flash, send_from_directory
 import sqlite3
 import os
 import csv
@@ -7,14 +7,12 @@ from pathlib import Path
 import razorpay
 import hmac, hashlib
 from flask_cors import CORS
-from flask import send_from_directory
 
 # Try to import error classes; fall back if SDK version doesn't expose them
 try:
-    from razorpay.errors import RazorpayError, BadRequestError, ServerError, SignatureVerificationError
+    from razorpay.errors import RazorpayError
 except Exception:
     class RazorpayError(Exception): ...
-    BadRequestError = ServerError = SignatureVerificationError = RazorpayError
 
 # --------------------------------------------------------------------------------------
 # App & Config
@@ -33,27 +31,26 @@ load_dotenv(key_env_path, override=True)
 
 RAZORPAY_KEY_ID = (os.getenv("RAZORPAY_KEY_ID") or "").strip()
 RAZORPAY_KEY_SECRET = (os.getenv("RAZORPAY_KEY_SECRET") or "").strip()
+
+# Razorpay client
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
+# Simple helper
+def _prefix(s): return (s[:8] + "…" + s[-4:]) if s else ""
+
+print("[RZP] key_id:", _prefix(RAZORPAY_KEY_ID) or "<missing>")
 
 # --------------------------------------------------------------------------------------
 # CORS (Frontend origins)
 # --------------------------------------------------------------------------------------
-FRONTEND_ORIGINS = [
-    "https://www.kvsacademy.org",
-    "https://kvsacademy.org",
-    # local dev (uncomment if needed)
-    "http://127.0.0.1:5000",
-    "http://localhost:5000",
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-]
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://127.0.0.1:5000")
+
 CORS(
     app,
-    resources={r"/*": {"origins": FRONTEND_ORIGINS}},
+    resources={r"/*": {"origins": [FRONTEND_ORIGIN]}},
     methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type"],
+    allow_headers=["Content-Type", "Authorization"],
 )
-
 # --------------------------------------------------------------------------------------
 # Database
 # --------------------------------------------------------------------------------------
@@ -120,13 +117,21 @@ def login_required():
         return False
     return True
 
-# --------------------------------------------------------------------------------------
-# Helpers
-# --------------------------------------------------------------------------------------
 def json_error(message, status=400, **extra):
     resp = {"ok": False, "error": message}
     resp.update(extra)
     return jsonify(resp), status
+
+# --------------------------------------------------------------------------------------
+# Static helpers (favicon to avoid 404)
+# --------------------------------------------------------------------------------------
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico',
+        mimetype='image/vnd.microsoft.icon'
+    )
 
 # --------------------------------------------------------------------------------------
 # Pages
@@ -148,24 +153,15 @@ def contact(): return render_template('contact.html')
 
 @app.route("/test")
 def test(): return render_template("forgot.html")
-# --- Pages (add these) ---
+
 @app.route('/news')
-def news():
-    return render_template('news.html')
+def news(): return render_template('news.html')
 
 @app.route('/achievements')
-def achievements():
-    return render_template('achievements.html')
+def achievements(): return render_template('achievements.html')
 
 @app.route('/appointment')
-def appointment():
-    return render_template('appointment.html')
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
+def appointment(): return render_template('appointment.html')
 
 @app.route('/dashboard')
 def dashboard():
@@ -269,15 +265,18 @@ def get_key(): return jsonify({"key": RAZORPAY_KEY_ID})
 def create_order():
     data = request.get_json(silent=True) or {}
     try:
-        # Prefer 'amount' in paise from client; optionally support 'rupees' fallback
+        # Ensure keys present
+        if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
+            return jsonify({"error": "Server misconfigured: missing Razorpay keys"}), 500
+
+        # Expect paise from client; support 'rupees' fallback and small-value heuristic
         if "rupees" in data:
             amount_paise = int(data.get("rupees", 0)) * 100
         else:
             amount_paise = int(data.get("amount", 0))  # expected paise
 
-        # Heuristic fallback: if amount is small but > 0, treat it as rupees
         if 0 < amount_paise < 100:
-            amount_paise = amount_paise * 100
+            amount_paise = amount_paise * 100  # treat tiny values as rupees by mistake
 
         if amount_paise <= 0:
             return jsonify({"error": "Invalid amount (send paise, e.g., ₹1 -> 100)"}), 400
@@ -294,11 +293,12 @@ def create_order():
             "key": RAZORPAY_KEY_ID
         }), 201
     except RazorpayError as e:
-        return jsonify({"error": str(e)}), 400
+        # Surface any SDK error details
+        return jsonify({"error": "RazorpayError", "message": str(e)}), 400
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": "Exception", "message": str(e)}), 400
 
-# Keep the alias for older clients (optional)
+# Backward-compatible alias (if any old client still calls dash path)
 @app.route("/create-order", methods=["POST"])
 def create_order_alias():
     return create_order()
@@ -323,7 +323,7 @@ def verify_payment():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 
-# (Legacy JSON status endpoints/pages if you use them elsewhere)
+# Payment pages (HTML)
 @app.route("/payment_success_page")
 def payment_success_page(): return render_template("payment_success.html")
 
@@ -352,11 +352,10 @@ def payment_lookup():
 # --------------------------------------------------------------------------------------
 # Diagnostics
 # --------------------------------------------------------------------------------------
-@app.route("/_razorpay_diag")
-def _razorpay_diag():
-    kid = RAZORPAY_KEY_ID or ""
-    mode = "LIVE" if kid.startswith("rzp_live_") else ("TEST" if kid.startswith("rzp_test_") else "UNKNOWN")
-    return {"key_id_prefix": (kid[:12] + "...") if kid else "", "mode": mode}, 200
+@app.route("/_rzp_diag")
+def _rzp_diag():
+    mode = "LIVE" if RAZORPAY_KEY_ID.startswith("rzp_live_") else ("TEST" if RAZORPAY_KEY_ID.startswith("rzp_test_") else "UNKNOWN")
+    return {"ok": bool(RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET), "mode": mode, "key_id_prefix": _prefix(RAZORPAY_KEY_ID)}
 
 @app.route("/health")
 def health():
@@ -366,6 +365,6 @@ def health():
 # Main
 # --------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    # Use PORT env in prod; default 5000. Bind 0.0.0.0 for containers/platforms.
     port = int(os.getenv("PORT", "5000"))
+    # Bind 0.0.0.0 so it’s reachable on LAN; disable debug in prod
     app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
