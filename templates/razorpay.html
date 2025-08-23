@@ -2,6 +2,8 @@
 {% block title %}Pay with Razorpay - KVS Kabaddi Academy{% endblock %}
 
 {% block content %}
+<link rel="icon" href="/path/to/favicon.ico" type="image/x-icon">
+
 <div class="container" style="max-width: 560px; margin: 40px auto;">
   <h2>Pay with Razorpay</h2>
   <p>Enter amount and click Pay.</p>
@@ -26,31 +28,56 @@
   const payBtn = document.getElementById("payBtn");
   const msgEl = document.getElementById("msg");
   const amountEl = document.getElementById("amount");
+  const setMsg = (t) => { msgEl.textContent = t || ""; };
 
-  function setMsg(t) { msgEl.textContent = t || ""; }
+  // ⬇️ Set this to your backend origin (no trailing slash)
+  // e.g. "https://api.kvsacademy.org" or your Render/EC2 URL
+  const API_BASE = "https://YOUR-BACKEND-ORIGIN";
+
+  // ⬇️ Set these to EXACTLY what your backend exposes
+  const PATH_CREATE = "/create_order";     // or "/create-order"
+  const PATH_VERIFY = "/verify-payment";   // or "/verify_payment"
+
+  async function readJsonSafe(res) {
+    const ct = res.headers.get("content-type") || "";
+    const text = await res.text();
+    if (!ct.includes("application/json")) {
+      throw new Error(`Expected JSON, got: ${text.slice(0,200)}`);
+    }
+    try { return JSON.parse(text); }
+    catch { throw new Error(`Bad JSON: ${text.slice(0,200)}`); }
+  }
 
   async function createOrder(rupees) {
-    const res = await fetch("/create-order", {
+    // Convert to paise here; or omit amount entirely if server decides amount
+    const amount_paise = rupees * 100;
+    const res = await fetch(`${API_BASE}${PATH_CREATE}`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ amount: rupees })
+      body: JSON.stringify({ amount: amount_paise })
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Order creation failed");
-    return data; // { order_id, amount, currency, key }
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Create order ${res.status}: ${t.slice(0,200)}`);
+    }
+    return readJsonSafe(res);  // expected: { id, amount, currency, key or key_id }
   }
 
   async function verifyPayment(resp) {
-    const res = await fetch("/verify-payment", {
+    const res = await fetch(`${API_BASE}${PATH_VERIFY}`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({
         razorpay_payment_id: resp.razorpay_payment_id,
-        razorpay_order_id: resp.razorpay_order_id,
-        razorpay_signature: resp.razorpay_signature
+        razorpay_order_id:    resp.razorpay_order_id,
+        razorpay_signature:   resp.razorpay_signature
       })
     });
-    return res.json(); // { ok: true/false, error? }
+    if (!res.ok) {
+      const t = await res.text();
+      throw new Error(`Verify ${res.status}: ${t.slice(0,200)}`);
+    }
+    return readJsonSafe(res); // expected: { ok: true } on success
   }
 
   async function startPayment() {
@@ -63,21 +90,26 @@
       setMsg("");
 
       const options = {
-        key: order.key,                // ✅ LIVE key from backend
-        amount: order.amount,          // paise
-        currency: order.currency || "INR",
-        name: "KVS Kabaddi Academy",
+        key:       order.key || order.key_id,     // support either field
+        amount:    order.amount,                  // paise
+        currency:  order.currency || "INR",
+        name:      "KVS Kabaddi Academy",
         description: "Online Payment",
-        order_id: order.order_id,
+        order_id:  order.id || order.order_id,    // support either field
         theme: { color: "#0f9d58" },
 
         handler: async function (response) {
-          const verify = await verifyPayment(response);
-          if (verify.ok) {
-            alert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id);
-            window.location.href = "/payment-success";
-          } else {
-            alert("❌ Payment verification failed.");
+          try {
+            const verify = await verifyPayment(response);
+            if (verify && (verify.ok === true || verify.status === "verified")) {
+              alert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id);
+              window.location.href = "/payment-success";
+            } else {
+              alert("❌ Payment verification failed.");
+              window.location.href = "/payment-failed";
+            }
+          } catch (e) {
+            alert("❌ Verify error: " + e.message);
             window.location.href = "/payment-failed";
           }
         },
@@ -87,7 +119,7 @@
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (res) {
-        alert("❌ Payment failed: " + (res.error && res.error.description ? res.error.description : "Unknown error"));
+        alert("❌ Payment failed: " + (res.error?.description || "Unknown error"));
         window.location.href = "/payment-failed";
       });
 
@@ -101,4 +133,5 @@
   payBtn.addEventListener("click", startPayment);
 })();
 </script>
+
 {% endblock %}

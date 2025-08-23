@@ -2,6 +2,8 @@
 {% block title %}Register & Pay - KVS Kabaddi Academy{% endblock %}
 {% block content %}
 
+<link rel="icon" href="/path/to/favicon.ico" type="image/x-icon">
+
 <div class="reg-main-container">
   <div class="registration-container">
     <h1 class="form-title">Register & Pay</h1>
@@ -30,7 +32,20 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgEl = document.getElementById("msg");
   const setMsg = (t) => { if (msgEl) msgEl.textContent = t || ""; console.log("[UI]", t); };
 
+  // ⚠️ Change this to your backend origin (no trailing slash)
+  const API_BASE = "https://YOUR-BACKEND-ORIGIN"; // e.g. https://api.kvsacademy.org
+
   payBtn.addEventListener("click", startPayment);
+
+  async function readAsJson(resp) {
+    const ct = resp.headers.get("content-type") || "";
+    const text = await resp.text();
+    if (!ct.includes("application/json")) {
+      throw new Error(`Expected JSON, got: ${text.slice(0, 200)}`);
+    }
+    try { return JSON.parse(text); }
+    catch (e) { throw new Error(`Bad JSON: ${text.slice(0, 200)}`); }
+  }
 
   async function startPayment () {
     try {
@@ -50,18 +65,25 @@ document.addEventListener("DOMContentLoaded", function () {
       data.aadhaar = aadhaarRaw;
 
       setMsg("Creating order…");
-      const orderRes = await fetch("/create_order", {
+      // ✅ Use the correct origin and the exact route name your server exposes.
+      // If your server route is /create-order, change it here accordingly.
+      const orderRes = await fetch(`${API_BASE}/create_order`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 1 })
+        // For ₹1 use 100 paise. Or omit this and have the server set amount=100.
+        body: JSON.stringify({ amount: 100 })
       });
-      const order = await orderRes.json();
+
+      if (!orderRes.ok) {
+        const t = await orderRes.text();
+        throw new Error(`Create order failed ${orderRes.status}: ${t.slice(0,200)}`);
+      }
+      const order = await readAsJson(orderRes);
       console.log("[create_order]", orderRes.status, order);
-      if (!orderRes.ok) { setMsg("Order error: " + (order.error || "unknown")); return; }
 
       setMsg("Opening payment popup…");
       const options = {
-        key: order.key,
+        key: order.key || order.key_id,   // support either field from server
         amount: order.amount,
         currency: order.currency || "INR",
         name: "KVS Kabaddi Academy",
@@ -69,11 +91,11 @@ document.addEventListener("DOMContentLoaded", function () {
         order_id: order.id,
         prefill: { name: data.name, contact: data.contact },
         theme: { color: "#FACC15" },
-
         handler: async function (response) {
           try {
             setMsg("Verifying payment…");
-            const verifyRes = await fetch("/verify-payment", {
+            // ✅ Match server route name exactly
+            const verifyRes = await fetch(`${API_BASE}/verify-payment`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
@@ -82,27 +104,37 @@ document.addEventListener("DOMContentLoaded", function () {
                 razorpay_signature: response.razorpay_signature
               })
             });
-            const verify = await verifyRes.json();
+
+            if (!verifyRes.ok) {
+              const t = await verifyRes.text();
+              throw new Error(`Verify failed ${verifyRes.status}: ${t.slice(0,200)}`);
+            }
+            const verify = await readAsJson(verifyRes);
             console.log("[verify-payment]", verifyRes.status, verify);
 
-            if (!(verifyRes.ok && verify && (verify.ok === true || verify.status?.includes("verified")))) {
+            if (!(verify && (verify.ok === true || verify.status?.includes("verified")))) {
               alert("❌ Payment verification failed on server.");
               setMsg("Verification failed.");
-              window.location.href = "/payment-failed";
+              location.href = "/payment-failed";
               return;
             }
 
             setMsg("Saving registration…");
-            const saveRes = await fetch("/registration", {
+            const saveRes = await fetch(`${API_BASE}/registration`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ ...data, payment_id: response.razorpay_payment_id })
             });
-            const saveJson = await saveRes.json();
+
+            if (!saveRes.ok) {
+              const t = await saveRes.text();
+              throw new Error(`Registration save failed ${saveRes.status}: ${t.slice(0,200)}`);
+            }
+            const saveJson = await readAsJson(saveRes);
             console.log("[registration]", saveRes.status, saveJson);
 
-            if (saveRes.ok && saveJson && saveJson.success) {
-              window.location.href = "/payment-success";
+            if (saveJson && saveJson.success) {
+              location.href = "/payment-success";
             } else {
               alert("Payment verified, but saving registration failed.");
               setMsg("Payment verified, but DB save failed.");
@@ -110,22 +142,17 @@ document.addEventListener("DOMContentLoaded", function () {
           } catch (e) {
             console.error("[handler error]", e);
             alert("Verification/save error: " + e.message);
-            window.location.href = "/payment-failed";
+            location.href = "/payment-failed";
           }
         },
-
-        modal: {
-          ondismiss: function () {
-            setMsg("Payment popup closed. No charge made.");
-          }
-        }
+        modal: { ondismiss: function () { setMsg("Payment popup closed. No charge made."); } }
       };
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (res) {
         console.warn("[payment.failed]", res);
         alert("Payment Failed: " + (res.error?.description || "Unknown error"));
-        window.location.href = "/payment-failed";
+        location.href = "/payment-failed";
       });
 
       rzp.open();
