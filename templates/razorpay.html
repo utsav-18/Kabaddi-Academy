@@ -30,13 +30,18 @@
   const amountEl = document.getElementById("amount");
   const setMsg = (t) => { msgEl.textContent = t || ""; };
 
-  // ⬇️ Set this to your backend origin (no trailing slash)
-  // e.g. "https://api.kvsacademy.org" or your Render/EC2 URL
-  const API_BASE = "https://YOUR-BACKEND-ORIGIN";
+  // =========================
+  // FRONTEND API CONFIG
+  // =========================
+  const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  // TODO: replace with your actual deployed backend origin (HTTPS)
+  const API_BASE = IS_LOCAL
+    ? "http://127.0.0.1:5000"
+    : "https://www.kvsacademy.org/";    // e.g. https://api.kvsacademy.org or your Render URL
 
-  // ⬇️ Set these to EXACTLY what your backend exposes
-  const PATH_CREATE = "/create_order";     // or "/create-order"
-  const PATH_VERIFY = "/verify-payment";   // or "/verify_payment"
+  // Match these to your server exactly (choose underscore or dash and keep it consistent)
+  const PATH_CREATE = "/create_order";
+  const PATH_VERIFY = "/verify-payment";
 
   async function readJsonSafe(res) {
     const ct = res.headers.get("content-type") || "";
@@ -49,8 +54,7 @@
   }
 
   async function createOrder(rupees) {
-    // Convert to paise here; or omit amount entirely if server decides amount
-    const amount_paise = rupees * 100;
+    const amount_paise = rupees * 100; // Razorpay expects paise
     const res = await fetch(`${API_BASE}${PATH_CREATE}`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
@@ -60,7 +64,7 @@
       const t = await res.text();
       throw new Error(`Create order ${res.status}: ${t.slice(0,200)}`);
     }
-    return readJsonSafe(res);  // expected: { id, amount, currency, key or key_id }
+    return readJsonSafe(res); // expected: { id, amount, currency, key or key_id }
   }
 
   async function verifyPayment(resp) {
@@ -77,7 +81,7 @@
       const t = await res.text();
       throw new Error(`Verify ${res.status}: ${t.slice(0,200)}`);
     }
-    return readJsonSafe(res); // expected: { ok: true } on success
+    return readJsonSafe(res); // expected: { ok: true }
   }
 
   async function startPayment() {
@@ -90,7 +94,7 @@
       setMsg("");
 
       const options = {
-        key:       order.key || order.key_id,     // support either field
+        key:       order.key || order.key_id,     // support either field from server
         amount:    order.amount,                  // paise
         currency:  order.currency || "INR",
         name:      "KVS Kabaddi Academy",
@@ -133,5 +137,4 @@
   payBtn.addEventListener("click", startPayment);
 })();
 </script>
-
 {% endblock %}
