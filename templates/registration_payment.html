@@ -24,7 +24,7 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-(function () {
+document.addEventListener("DOMContentLoaded", function () {
   const form = document.getElementById("regForm");
   const payBtn = document.getElementById("payBtn");
   const msgEl = document.getElementById("msg");
@@ -34,7 +34,6 @@
 
   async function startPayment () {
     try {
-      // ---- Validations ----
       const name = form.elements['name'].value.trim();
       const contact = form.elements['contact'].value.trim();
       const aadhaarRaw = form.elements['aadhaar'] ? form.elements['aadhaar'].value.replace(/\s+/g, '') : "";
@@ -45,24 +44,21 @@
       if (!/^\d{12}$/.test(aadhaarRaw)) { alert("Please enter a valid 12-digit Aadhaar number."); return; }
       if (!/^\d{10}$/.test(contact)) { alert("Please enter a valid 10-digit mobile number."); return; }
 
-      // ---- Collect data ----
       const formData = new FormData(form);
       const data = {};
       formData.forEach((v, k) => data[k] = v);
       data.aadhaar = aadhaarRaw;
 
-      // 1) Create order on backend (₹1)
       setMsg("Creating order…");
-      const orderRes = await fetch("/create-order", {
+      const orderRes = await fetch("/create_order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: 1 })
       });
       const order = await orderRes.json();
-      console.log("[create-order]", orderRes.status, order);
+      console.log("[create_order]", orderRes.status, order);
       if (!orderRes.ok) { setMsg("Order error: " + (order.error || "unknown")); return; }
 
-      // 2) Open Razorpay Checkout with LIVE key + order_id
       setMsg("Opening payment popup…");
       const options = {
         key: order.key,
@@ -70,14 +66,12 @@
         currency: order.currency || "INR",
         name: "KVS Kabaddi Academy",
         description: "Admission Fee",
-        order_id: order.order_id,
+        order_id: order.id,
         prefill: { name: data.name, contact: data.contact },
         theme: { color: "#FACC15" },
 
-        // Instant success path
         handler: async function (response) {
           try {
-            alert("Payment success! Verifying…"); // debug helper
             setMsg("Verifying payment…");
             const verifyRes = await fetch("/verify-payment", {
               method: "POST",
@@ -91,14 +85,13 @@
             const verify = await verifyRes.json();
             console.log("[verify-payment]", verifyRes.status, verify);
 
-            if (!(verifyRes.ok && verify && verify.ok === true)) {
+            if (!(verifyRes.ok && verify && (verify.ok === true || verify.status?.includes("verified")))) {
               alert("❌ Payment verification failed on server.");
               setMsg("Verification failed.");
               window.location.href = "/payment-failed";
               return;
             }
 
-            // Save registration
             setMsg("Saving registration…");
             const saveRes = await fetch("/registration", {
               method: "POST",
@@ -121,14 +114,9 @@
           }
         },
 
-        // ✅ Fallback: even if handler doesn't run, Razorpay will POST to this URL and redirect
-        callback_url: "/razorpay/callback",
-        redirect: true,
-
         modal: {
           ondismiss: function () {
             setMsg("Payment popup closed. No charge made.");
-            console.log("[rzp] modal dismissed");
           }
         }
       };
@@ -140,7 +128,6 @@
         window.location.href = "/payment-failed";
       });
 
-      window.__rzp = rzp; // for console debugging
       rzp.open();
 
     } catch (err) {
@@ -150,18 +137,15 @@
     }
   }
 
-  // Aadhaar auto-format XXXX XXXX XXXX
-  document.addEventListener("DOMContentLoaded", function() {
-    const aadhaarInput = document.querySelector("input[name='aadhaar']");
-    if (aadhaarInput) {
-      aadhaarInput.addEventListener("input", function(e) {
-        let value = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/g, "");
-        if (value.length > 12) value = value.slice(0, 12);
-        e.target.value = value.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-      });
-    }
-  });
-})();
+  const aadhaarInput = document.querySelector("input[name='aadhaar']");
+  if (aadhaarInput) {
+    aadhaarInput.addEventListener("input", function(e) {
+      let value = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/g, "");
+      if (value.length > 12) value = value.slice(0, 12);
+      e.target.value = value.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+    });
+  }
+});
 </script>
 
 {% endblock %}

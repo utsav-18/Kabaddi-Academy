@@ -1,0 +1,24 @@
+# Ignore environment files
+.env
+key.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# SQLite database
+*.db
+data/
+
+# Logs
+*.log
+
+# VSCode / IDE settings
+.vscode/
+.idea/
+
+# OS-specific
+.DS_Store
+Thumbs.db
