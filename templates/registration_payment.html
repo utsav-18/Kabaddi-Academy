@@ -30,16 +30,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgEl = document.getElementById("msg");
   const setMsg = (t) => { if (msgEl) msgEl.textContent = t || ""; console.log("[UI]", t); };
 
-  // =========================
-  // FRONTEND API CONFIG
-  // =========================
-  const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  // TODO: replace with your actual deployed backend origin (HTTPS)
-  const API_BASE = IS_LOCAL
-    ? "http://127.0.0.1:5000"
-    : "https://www.kvsacademy.org/";   // e.g. https://api.kvsacademy.org or your Render URL
-
-  // Match these to your server exactly (choose underscore or dash and keep it consistent)
+  // === API CONFIG ===
+  const API_BASE = "https://www.kvsacademy.org";   // change only if your backend is on a different host
   const PATH_CREATE = "/create_order";
   const PATH_VERIFY = "/verify-payment";
   const PATH_REGISTER = "/registration";
@@ -47,11 +39,8 @@ document.addEventListener("DOMContentLoaded", function () {
   async function readJsonSafe(resp) {
     const ct = resp.headers.get("content-type") || "";
     const text = await resp.text();
-    if (!ct.includes("application/json")) {
-      throw new Error(`Expected JSON, got: ${text.slice(0, 200)}`);
-    }
-    try { return JSON.parse(text); }
-    catch { throw new Error(`Bad JSON: ${text.slice(0, 200)}`); }
+    if (!ct.includes("application/json")) throw new Error(`Expected JSON, got: ${text.slice(0,200)}`);
+    try { return JSON.parse(text); } catch { throw new Error(`Bad JSON: ${text.slice(0,200)}`); }
   }
 
   payBtn.addEventListener("click", startPayment);
@@ -69,12 +58,10 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!/^\d{10}$/.test(contact)) { alert("Please enter a valid 10-digit mobile number."); return; }
 
       const formData = new FormData(form);
-      const data = {};
-      formData.forEach((v, k) => data[k] = v);
+      const data = {}; formData.forEach((v, k) => data[k] = v);
       data.aadhaar = aadhaarRaw;
 
-      // For ₹1 we must send 100 (paise)
-      const amountPaise = 1 * 100;
+      const amountPaise = 100; // ₹1
 
       setMsg("Creating order…");
       const orderRes = await fetch(`${API_BASE}${PATH_CREATE}`, {
@@ -82,24 +69,19 @@ document.addEventListener("DOMContentLoaded", function () {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: amountPaise })
       });
-      if (!orderRes.ok) {
-        const t = await orderRes.text();
-        throw new Error(`Create order ${orderRes.status}: ${t.slice(0,200)}`);
-      }
+      if (!orderRes.ok) { const t = await orderRes.text(); throw new Error(`Create order ${orderRes.status}: ${t.slice(0,200)}`); }
       const order = await readJsonSafe(orderRes);
-      console.log("[create_order]", orderRes.status, order);
 
       setMsg("Opening payment popup…");
       const options = {
-        key: order.key || order.key_id,              // support either field
-        amount: order.amount,                        // paise
+        key: order.key || order.key_id,
+        amount: order.amount,
         currency: order.currency || "INR",
         name: "KVS Kabaddi Academy",
         description: "Admission Fee",
-        order_id: order.id || order.order_id,        // support either field
+        order_id: order.id || order.order_id,
         prefill: { name: data.name, contact: data.contact },
         theme: { color: "#FACC15" },
-
         handler: async function (response) {
           try {
             setMsg("Verifying payment…");
@@ -112,18 +94,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 razorpay_signature: response.razorpay_signature
               })
             });
-            if (!verifyRes.ok) {
-              const t = await verifyRes.text();
-              throw new Error(`Verify ${verifyRes.status}: ${t.slice(0,200)}`);
-            }
+            if (!verifyRes.ok) { const t = await verifyRes.text(); throw new Error(`Verify ${verifyRes.status}: ${t.slice(0,200)}`); }
             const verify = await readJsonSafe(verifyRes);
-            console.log("[verify-payment]", verifyRes.status, verify);
 
             if (!(verify && (verify.ok === true || verify.status?.includes("verified")))) {
               alert("❌ Payment verification failed on server.");
-              setMsg("Verification failed.");
-              window.location.href = "/payment-failed";
-              return;
+              setMsg("Verification failed."); window.location.href = "/payment-failed"; return;
             }
 
             setMsg("Saving registration…");
@@ -132,12 +108,8 @@ document.addEventListener("DOMContentLoaded", function () {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ ...data, payment_id: response.razorpay_payment_id })
             });
-            if (!saveRes.ok) {
-              const t = await saveRes.text();
-              throw new Error(`Registration save ${saveRes.status}: ${t.slice(0,200)}`);
-            }
+            if (!saveRes.ok) { const t = await saveRes.text(); throw new Error(`Registration save ${saveRes.status}: ${t.slice(0,200)}`); }
             const saveJson = await readJsonSafe(saveRes);
-            console.log("[registration]", saveRes.status, saveJson);
 
             if (saveJson && saveJson.success) {
               window.location.href = "/payment-success";
@@ -151,18 +123,12 @@ document.addEventListener("DOMContentLoaded", function () {
             window.location.href = "/payment-failed";
           }
         },
-
-        modal: {
-          ondismiss: function () {
-            setMsg("Payment popup closed. No charge made.");
-          }
-        }
+        modal: { ondismiss: function(){ setMsg("Payment popup closed. No charge made."); } }
       };
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (res) {
-        console.warn("[payment.failed]", res);
-        alert("Payment Failed: " + (res.error?.description || "Unknown error"));
+        alert("❌ Payment failed: " + (res.error?.description || "Unknown error"));
         window.location.href = "/payment-failed";
       });
 

@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from pathlib import Path
 import razorpay
 import hmac, hashlib
+from flask_cors import CORS
+from flask import send_from_directory
 
 # Try to import error classes; fall back if SDK version doesn't expose them
 try:
@@ -14,15 +16,16 @@ except Exception:
     class RazorpayError(Exception): ...
     BadRequestError = ServerError = SignatureVerificationError = RazorpayError
 
+# --------------------------------------------------------------------------------------
+# App & Config
+# --------------------------------------------------------------------------------------
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # change in prod
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # change in prod
 
 DB_PATH = "data/database.db"
 CSV_PATH = "data/students.csv"
 
-# ======================
-# 🔑 Razorpay LIVE KEYS (from key.env or Render env)
-# ======================
+# Load RZP keys from key.env (local) or env (prod)
 BASE_DIR = Path(__file__).resolve().parent
 key_env_path = BASE_DIR / "key.env"
 print("Loading keys from:", key_env_path)
@@ -32,9 +35,28 @@ RAZORPAY_KEY_ID = (os.getenv("RAZORPAY_KEY_ID") or "").strip()
 RAZORPAY_KEY_SECRET = (os.getenv("RAZORPAY_KEY_SECRET") or "").strip()
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
-# ======================
-# Database Initialization
-# ======================
+# --------------------------------------------------------------------------------------
+# CORS (Frontend origins)
+# --------------------------------------------------------------------------------------
+FRONTEND_ORIGINS = [
+    "https://www.kvsacademy.org",
+    "https://kvsacademy.org",
+    # local dev (uncomment if needed)
+    "http://127.0.0.1:5000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500",
+]
+CORS(
+    app,
+    resources={r"/*": {"origins": FRONTEND_ORIGINS}},
+    methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type"],
+)
+
+# --------------------------------------------------------------------------------------
+# Database
+# --------------------------------------------------------------------------------------
 def init_db():
     os.makedirs("data", exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -86,7 +108,6 @@ def init_db():
 
 init_db()
 
-# Helpers
 def get_conn(row_factory=None):
     conn = sqlite3.connect(DB_PATH)
     if row_factory:
@@ -99,9 +120,17 @@ def login_required():
         return False
     return True
 
-# ======================
-# Routes
-# ======================
+# --------------------------------------------------------------------------------------
+# Helpers
+# --------------------------------------------------------------------------------------
+def json_error(message, status=400, **extra):
+    resp = {"ok": False, "error": message}
+    resp.update(extra)
+    return jsonify(resp), status
+
+# --------------------------------------------------------------------------------------
+# Pages
+# --------------------------------------------------------------------------------------
 @app.route('/')
 def home(): return render_template('index.html')
 
@@ -119,6 +148,24 @@ def contact(): return render_template('contact.html')
 
 @app.route("/test")
 def test(): return render_template("forgot.html")
+# --- Pages (add these) ---
+@app.route('/news')
+def news():
+    return render_template('news.html')
+
+@app.route('/achievements')
+def achievements():
+    return render_template('achievements.html')
+
+@app.route('/appointment')
+def appointment():
+    return render_template('appointment.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -192,7 +239,9 @@ def forgot():
 def logout():
     session.clear(); flash("You have been logged out.", "info"); return redirect(url_for("login"))
 
-# Registration + Payment
+# --------------------------------------------------------------------------------------
+# Registration + Payment (pages & APIs)
+# --------------------------------------------------------------------------------------
 @app.route('/registration', methods=['GET','POST'])
 def registration():
     if request.method == 'POST':
@@ -202,83 +251,81 @@ def registration():
             INSERT INTO students (name,father_name,dob,class,academy_join,duration,contact,aadhaar,payment_id)
             VALUES (?,?,?,?,?,?,?,?,?)
         """, (data.get('name'), data.get('father_name'), data.get('dob'), data.get('class'),
-              data.get('academy_join'), data.get('duration'), data.get('contact'), data.get('aadhaar'), data.get('payment_id')))
+              data.get('academy_join'), data.get('duration'), data.get('contact'),
+              data.get('aadhaar'), data.get('payment_id')))
         conn.commit(); conn.close()
         return jsonify({'success': True, 'message': 'Registered and payment saved.'})
     return render_template('registration_payment.html')
 
-@app.route('/edit/<int:sno>', methods=['GET','POST'])
-def edit_student(sno):
-    if not login_required(): return redirect(url_for('login', next=url_for('edit_student', sno=sno)))
-    conn = get_conn(); cur = conn.cursor()
-    if request.method == "POST":
-        cur.execute("""
-            UPDATE students SET name=?, father_name=?, dob=?, class=?, academy_join=?, duration=?, contact=?, aadhaar=? WHERE sno=?
-        """, (request.form.get('name'), request.form.get('father_name'), request.form.get('dob'),
-              request.form.get('class'), request.form.get('academy_join'), request.form.get('duration'),
-              request.form.get('contact'), request.form.get('aadhaar'), sno))
-        conn.commit(); conn.close(); flash("Student updated.","success"); return redirect(url_for("dashboard"))
-    conn.row_factory = sqlite3.Row; cur = conn.cursor(); cur.execute("SELECT * FROM students WHERE sno=?", (sno,))
-    student = cur.fetchone(); conn.close()
-    if not student: return "Student not found", 404
-    return render_template("edit_student.html", student=student)
-
-@app.route('/delete/<int:sno>')
-def delete_student(sno):
-    if not login_required(): return redirect(url_for('login', next=url_for('delete_student', sno=sno)))
-    conn = get_conn(); cur = conn.cursor(); cur.execute("DELETE FROM students WHERE sno=?", (sno,))
-    conn.commit(); conn.close(); flash("Student deleted.","info"); return redirect(url_for("dashboard"))
-
-@app.route('/news')
-def news(): return render_template('news.html')
-
-@app.route('/achievements')
-def achievements(): return render_template('achievements.html')
-
-@app.route('/appointment')
-def appointment(): return render_template('appointment.html')
-
-# ======================
-# Razorpay Endpoints
-# ======================
 @app.route('/razorpay')
 def razorpay_page(): return render_template('razorpay.html')
 
 @app.route('/get_key')
 def get_key(): return jsonify({"key": RAZORPAY_KEY_ID})
 
+# ---------- Create Order ----------
+# POST /create_order -> { id, amount, currency, key }
 @app.route("/create_order", methods=["POST"])
 def create_order():
     data = request.get_json(silent=True) or {}
     try:
-        amount_rupees = int(data.get("amount", 1))
-        if amount_rupees <= 0:
-            return jsonify({"error": "Invalid amount"}), 400
-        order = razorpay_client.order.create({"amount": amount_rupees * 100, "currency": "INR", "payment_capture": 1})
+        # Prefer 'amount' in paise from client; optionally support 'rupees' fallback
+        if "rupees" in data:
+            amount_paise = int(data.get("rupees", 0)) * 100
+        else:
+            amount_paise = int(data.get("amount", 0))  # expected paise
+
+        # Heuristic fallback: if amount is small but > 0, treat it as rupees
+        if 0 < amount_paise < 100:
+            amount_paise = amount_paise * 100
+
+        if amount_paise <= 0:
+            return jsonify({"error": "Invalid amount (send paise, e.g., ₹1 -> 100)"}), 400
+
+        order = razorpay_client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "payment_capture": 1
+        })
         return jsonify({
             "id": order["id"],
             "amount": order["amount"],
             "currency": order["currency"],
-            "key": RAZORPAY_KEY_ID   # 👈 include key here
-        })
+            "key": RAZORPAY_KEY_ID
+        }), 201
     except RazorpayError as e:
         return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
 
+# Keep the alias for older clients (optional)
 @app.route("/create-order", methods=["POST"])
 def create_order_alias():
     return create_order()
 
-@app.route("/payment_success", methods=["POST"])
-def payment_success():
-    data = request.get_json(silent=True) or {}
-    rp_payment_id, rp_order_id, rp_signature = data.get('razorpay_payment_id'), data.get('razorpay_order_id'), data.get('razorpay_signature')
-    if not all([rp_payment_id, rp_order_id, rp_signature]):
-        return jsonify({"status": "Missing parameters"}), 400
-    body = f"{rp_order_id}|{rp_payment_id}".encode()
-    expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    if hmac.compare_digest(expected, rp_signature):
-        return jsonify({"status": "Payment verified successfully"}), 200
-    return jsonify({"status": "Signature mismatch"}), 400
+# ---------- Verify Payment ----------
+# POST /verify-payment -> { ok: true } on success
+@app.route("/verify-payment", methods=["POST"])
+def verify_payment():
+    try:
+        data = request.get_json(silent=True) or {}
+        rp_payment_id = data.get('razorpay_payment_id')
+        rp_order_id = data.get('razorpay_order_id')
+        rp_signature = data.get('razorpay_signature')
+        if not all([rp_payment_id, rp_order_id, rp_signature]):
+            return jsonify({"ok": False, "error": "Missing parameters"}), 400
+
+        body = f"{rp_order_id}|{rp_payment_id}".encode()
+        expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
+        if hmac.compare_digest(expected, rp_signature):
+            return jsonify({"ok": True}), 200
+        return jsonify({"ok": False, "error": "signature_mismatch"}), 400
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 400
+
+# (Legacy JSON status endpoints/pages if you use them elsewhere)
+@app.route("/payment_success_page")
+def payment_success_page(): return render_template("payment_success.html")
 
 @app.route("/payment_failed")
 def payment_failed(): return render_template('payment_failed.html')
@@ -289,12 +336,12 @@ def razorpay_callback():
     if not all([rp_payment_id, rp_order_id, rp_signature]): return redirect("/payment_failed")
     body = f"{rp_order_id}|{rp_payment_id}".encode()
     expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
-    if hmac.compare_digest(expected, rp_signature): return redirect("/payment_success")
+    if hmac.compare_digest(expected, rp_signature): return redirect("/payment_success_page")
     return redirect("/payment_failed")
 
 @app.route("/payment-lookup")
 def payment_lookup():
-    pid = request.args.get("pid"); 
+    pid = request.args.get("pid")
     if not pid: return jsonify({"error": "pass ?pid=payment_id"}), 400
     try:
         data = razorpay_client.payment.fetch(pid)
@@ -302,9 +349,9 @@ def payment_lookup():
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-@app.route("/payment_success_page")
-def payment_success_page(): return render_template("payment_success.html")
-
+# --------------------------------------------------------------------------------------
+# Diagnostics
+# --------------------------------------------------------------------------------------
 @app.route("/_razorpay_diag")
 def _razorpay_diag():
     kid = RAZORPAY_KEY_ID or ""
@@ -313,7 +360,12 @@ def _razorpay_diag():
 
 @app.route("/health")
 def health():
-    return {"status": "ok", "mode": ("LIVE" if RAZORPAY_KEY_ID.startswith("rzp_live_") else "TEST")}
+    return {"ok": True, "service": "kvs-backend", "mode": ("LIVE" if RAZORPAY_KEY_ID.startswith("rzp_live_") else "TEST")}
 
+# --------------------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------------------
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    # Use PORT env in prod; default 5000. Bind 0.0.0.0 for containers/platforms.
+    port = int(os.getenv("PORT", "5000"))
+    app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

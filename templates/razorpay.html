@@ -30,41 +30,27 @@
   const amountEl = document.getElementById("amount");
   const setMsg = (t) => { msgEl.textContent = t || ""; };
 
-  // =========================
-  // FRONTEND API CONFIG
-  // =========================
-  const IS_LOCAL = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-  // TODO: replace with your actual deployed backend origin (HTTPS)
-  const API_BASE = IS_LOCAL
-    ? "http://127.0.0.1:5000"
-    : "https://www.kvsacademy.org/";    // e.g. https://api.kvsacademy.org or your Render URL
-
-  // Match these to your server exactly (choose underscore or dash and keep it consistent)
+  // === API CONFIG ===
+  const API_BASE = "https://www.kvsacademy.org";  // change only if backend is on a different host
   const PATH_CREATE = "/create_order";
   const PATH_VERIFY = "/verify-payment";
 
   async function readJsonSafe(res) {
     const ct = res.headers.get("content-type") || "";
     const text = await res.text();
-    if (!ct.includes("application/json")) {
-      throw new Error(`Expected JSON, got: ${text.slice(0,200)}`);
-    }
-    try { return JSON.parse(text); }
-    catch { throw new Error(`Bad JSON: ${text.slice(0,200)}`); }
+    if (!ct.includes("application/json")) throw new Error(`Expected JSON, got: ${text.slice(0,200)}`);
+    try { return JSON.parse(text); } catch { throw new Error(`Bad JSON: ${text.slice(0,200)}`); }
   }
 
   async function createOrder(rupees) {
-    const amount_paise = rupees * 100; // Razorpay expects paise
+    const amount_paise = rupees * 100;
     const res = await fetch(`${API_BASE}${PATH_CREATE}`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify({ amount: amount_paise })
     });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`Create order ${res.status}: ${t.slice(0,200)}`);
-    }
-    return readJsonSafe(res); // expected: { id, amount, currency, key or key_id }
+    if (!res.ok) { const t = await res.text(); throw new Error(`Create order ${res.status}: ${t.slice(0,200)}`); }
+    return readJsonSafe(res); // { id, amount, currency, key }
   }
 
   async function verifyPayment(resp) {
@@ -77,11 +63,8 @@
         razorpay_signature:   resp.razorpay_signature
       })
     });
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`Verify ${res.status}: ${t.slice(0,200)}`);
-    }
-    return readJsonSafe(res); // expected: { ok: true }
+    if (!res.ok) { const t = await res.text(); throw new Error(`Verify ${res.status}: ${t.slice(0,200)}`); }
+    return readJsonSafe(res); // { ok: true }
   }
 
   async function startPayment() {
@@ -94,14 +77,13 @@
       setMsg("");
 
       const options = {
-        key:       order.key || order.key_id,     // support either field from server
-        amount:    order.amount,                  // paise
+        key:       order.key || order.key_id,
+        amount:    order.amount,
         currency:  order.currency || "INR",
         name:      "KVS Kabaddi Academy",
         description: "Online Payment",
-        order_id:  order.id || order.order_id,    // support either field
+        order_id:  order.id || order.order_id,
         theme: { color: "#0f9d58" },
-
         handler: async function (response) {
           try {
             const verify = await verifyPayment(response);
@@ -117,7 +99,6 @@
             window.location.href = "/payment-failed";
           }
         },
-
         modal: { ondismiss: function(){ setMsg("Payment popup closed. No charge made."); } }
       };
 
