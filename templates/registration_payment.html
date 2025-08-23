@@ -1,162 +1,167 @@
 {% extends "base.html" %}
-
 {% block title %}Register & Pay - KVS Kabaddi Academy{% endblock %}
-
 {% block content %}
 
 <div class="reg-main-container">
-    <div class="registration-container">
-        <h1 class="form-title">Register & Pay</h1>
+  <div class="registration-container">
+    <h1 class="form-title">Register & Pay</h1>
 
-        <form id="regForm" class="registration-form">
-            <label>
-                Name:
-                <input type="text" name="name" class="form-input" required>
-            </label>
+    <form id="regForm" class="registration-form">
+      <label>Name:<input type="text" name="name" class="form-input" required></label>
+      <label>Father Name:<input type="text" name="father_name" class="form-input"></label>
+      <label>DOB:<input type="date" name="dob" class="form-input"></label>
+      <label>Class:<input type="text" name="class" class="form-input"></label>
+      <label>Academy Join Date:<input type="date" name="academy_join" class="form-input" required></label>
+      <label>Duration (e.g. 6 months, 1 year):<input type="text" name="duration" class="form-input" placeholder="e.g. 6 months" required></label>
+      <label>Mobile No.:<input type="text" name="contact" class="form-input" maxlength="10" inputmode="numeric" required oninput="this.value=this.value.replace(/[^0-9]/g,'')"></label>
+      <label>Aadhaar Number:<input type="text" name="aadhaar" class="form-input" maxlength="14" inputmode="numeric" required oninput="this.value=this.value.replace(/[^0-9]/g,'')"></label>
+      <button type="button" id="payBtn" class="btn-primary">Pay ₹1 & Register</button>
+    </form>
 
-            <label>
-                Father Name:
-                <input type="text" name="father_name" class="form-input">
-            </label>
-
-            <label>
-                DOB:
-                <input type="date" name="dob" class="form-input">
-            </label>
-
-            <label>
-                Class:
-                <input type="text" name="class" class="form-input">
-            </label>
-
-            <label>
-                Academy Join Date:
-                <input type="date" name="academy_join" class="form-input" required>
-            </label>
-
-            <label>
-                Duration (e.g. 6 months, 1 year):
-                <input type="text" name="duration" class="form-input" placeholder="e.g. 6 months" required>
-            </label>
-
-            <label>
-                Mobile No.:
-                <input type="text" name="contact" class="form-input" 
-                    maxlength="10" inputmode="numeric" required
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            </label>
-
-            <label>
-                Aadhaar Number:
-                <input type="text" name="aadhaar" class="form-input" 
-                    maxlength="14" inputmode="numeric" required
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '')">
-            </label>
-
-            <button type="button" id="payBtn" class="btn-primary">
-                Pay ₹1 & Register
-            </button>
-        </form>
-
-        <p class="test-mode-info">
-            <strong>Test Mode —</strong> Use card <code>4111 1111 1111 1111</code>, any future expiry, CVV <code>123</code>
-        </p>
-    </div>
+    <div id="msg" style="margin-top:12px;color:#555;"></div>
+  </div>
 </div>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-document.getElementById("payBtn").addEventListener("click", function() {
-    const form = document.getElementById("regForm");
-    const name = form.elements['name'].value.trim();
-    const contact = form.elements['contact'].value.trim();
-    const aadhaarRaw = form.elements['aadhaar'] ? form.elements['aadhaar'].value.replace(/\s+/g, '') : "";
-    const duration = form.elements['duration'].value.trim();
-    const academyJoin = form.elements['academy_join'].value.trim();
+(function () {
+  const form = document.getElementById("regForm");
+  const payBtn = document.getElementById("payBtn");
+  const msgEl = document.getElementById("msg");
+  const setMsg = (t) => { if (msgEl) msgEl.textContent = t || ""; console.log("[UI]", t); };
 
-    // Check required fields
-    if (!name || !contact || !aadhaarRaw || !duration || !academyJoin) {
-        alert("Please fill in all required fields before proceeding.");
-        return;
-    }
+  payBtn.addEventListener("click", startPayment);
 
-    // Aadhaar validation (must be 12 digits)
-    if (!/^\d{12}$/.test(aadhaarRaw)) {
-        alert("Please enter a valid 12-digit Aadhaar number.");
-        return;
-    }
+  async function startPayment () {
+    try {
+      // ---- Validations ----
+      const name = form.elements['name'].value.trim();
+      const contact = form.elements['contact'].value.trim();
+      const aadhaarRaw = form.elements['aadhaar'] ? form.elements['aadhaar'].value.replace(/\s+/g, '') : "";
+      const duration = form.elements['duration'].value.trim();
+      const academyJoin = form.elements['academy_join'].value.trim();
 
-    // Contact validation (10 digits)
-    if (!/^\d{10}$/.test(contact)) {
-        alert("Please enter a valid 10-digit mobile number.");
-        return;
-    }
+      if (!name || !contact || !aadhaarRaw || !duration || !academyJoin) { alert("Please fill in all required fields before proceeding."); return; }
+      if (!/^\d{12}$/.test(aadhaarRaw)) { alert("Please enter a valid 12-digit Aadhaar number."); return; }
+      if (!/^\d{10}$/.test(contact)) { alert("Please enter a valid 10-digit mobile number."); return; }
 
-    // Prepare form data
-    const formData = new FormData(form);
-    let data = {};
-    formData.forEach((v, k) => data[k] = v);
-    data.aadhaar = aadhaarRaw; // send only digits
+      // ---- Collect data ----
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((v, k) => data[k] = v);
+      data.aadhaar = aadhaarRaw;
 
-    const options = {
-        key: "rzp_test_XbnqrIC7Y9cJV0", // test key
-        amount: 100, // ₹1 (100 paise)
-        currency: "INR",
+      // 1) Create order on backend (₹1)
+      setMsg("Creating order…");
+      const orderRes = await fetch("/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 1 })
+      });
+      const order = await orderRes.json();
+      console.log("[create-order]", orderRes.status, order);
+      if (!orderRes.ok) { setMsg("Order error: " + (order.error || "unknown")); return; }
+
+      // 2) Open Razorpay Checkout with LIVE key + order_id
+      setMsg("Opening payment popup…");
+      const options = {
+        key: order.key,
+        amount: order.amount,
+        currency: order.currency || "INR",
         name: "KVS Kabaddi Academy",
         description: "Admission Fee",
-        prefill: {
-            name: data.name,
-            contact: data.contact
-        },
+        order_id: order.order_id,
+        prefill: { name: data.name, contact: data.contact },
         theme: { color: "#FACC15" },
-        handler: function (response) {
-            fetch("/registration", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    ...data,
-                    payment_id: response.razorpay_payment_id
-                })
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    alert("Registration & Payment Successful!");
-                    window.location.href = "/dashboard";
-                } else {
-                    alert("Server rejected payment. Please contact support.");
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Something went wrong while saving registration.");
+
+        // Instant success path
+        handler: async function (response) {
+          try {
+            alert("Payment success! Verifying…"); // debug helper
+            setMsg("Verifying payment…");
+            const verifyRes = await fetch("/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature
+              })
             });
+            const verify = await verifyRes.json();
+            console.log("[verify-payment]", verifyRes.status, verify);
+
+            if (!(verifyRes.ok && verify && verify.ok === true)) {
+              alert("❌ Payment verification failed on server.");
+              setMsg("Verification failed.");
+              window.location.href = "/payment-failed";
+              return;
+            }
+
+            // Save registration
+            setMsg("Saving registration…");
+            const saveRes = await fetch("/registration", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...data, payment_id: response.razorpay_payment_id })
+            });
+            const saveJson = await saveRes.json();
+            console.log("[registration]", saveRes.status, saveJson);
+
+            if (saveRes.ok && saveJson && saveJson.success) {
+              window.location.href = "/payment-success";
+            } else {
+              alert("Payment verified, but saving registration failed.");
+              setMsg("Payment verified, but DB save failed.");
+            }
+          } catch (e) {
+            console.error("[handler error]", e);
+            alert("Verification/save error: " + e.message);
+            window.location.href = "/payment-failed";
+          }
+        },
+
+        // ✅ Fallback: even if handler doesn't run, Razorpay will POST to this URL and redirect
+        callback_url: "/razorpay/callback",
+        redirect: true,
+
+        modal: {
+          ondismiss: function () {
+            setMsg("Payment popup closed. No charge made.");
+            console.log("[rzp] modal dismissed");
+          }
         }
-    };
+      };
 
-    const rzp = new Razorpay(options);
+      const rzp = new Razorpay(options);
+      rzp.on("payment.failed", function (res) {
+        console.warn("[payment.failed]", res);
+        alert("Payment Failed: " + (res.error?.description || "Unknown error"));
+        window.location.href = "/payment-failed";
+      });
 
-    // Handle payment failures
-    rzp.on("payment.failed", function (response) {
-        alert("Payment Failed: " + response.error.description);
-    });
+      window.__rzp = rzp; // for console debugging
+      rzp.open();
 
-    rzp.open();
-});
+    } catch (err) {
+      console.error("[startPayment error]", err);
+      setMsg("Error: " + err.message);
+      alert("Error: " + err.message);
+    }
+  }
 
-// Aadhaar auto-formatting as XXXX XXXX XXXX
-document.addEventListener("DOMContentLoaded", function() {
+  // Aadhaar auto-format XXXX XXXX XXXX
+  document.addEventListener("DOMContentLoaded", function() {
     const aadhaarInput = document.querySelector("input[name='aadhaar']");
     if (aadhaarInput) {
-        aadhaarInput.addEventListener("input", function(e) {
-            let value = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/g, ""); // digits only
-            if (value.length > 12) value = value.slice(0, 12); // max 12 digits
-
-            // Format as XXXX XXXX XXXX
-            e.target.value = value.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
-        });
+      aadhaarInput.addEventListener("input", function(e) {
+        let value = e.target.value.replace(/\s+/g, "").replace(/[^0-9]/g, "");
+        if (value.length > 12) value = value.slice(0, 12);
+        e.target.value = value.replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+      });
     }
-});
+  });
+})();
 </script>
 
 {% endblock %}

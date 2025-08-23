@@ -3,11 +3,28 @@ import sqlite3
 import os
 import csv
 
+# ---- Razorpay additions (version-agnostic) ----
+import hmac, hashlib
+import razorpay
+# Try to import error classes; fall back if this SDK version doesn't expose them
+try:
+    from razorpay.errors import RazorpayError, BadRequestError, ServerError, SignatureVerificationError
+except Exception:
+    class RazorpayError(Exception): ...
+    BadRequestError = ServerError = SignatureVerificationError = RazorpayError
+
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # needed for sessions
+app.secret_key = "supersecretkey"  # change to a long random string in prod
 
 DB_PATH = "data/database.db"
 CSV_PATH = "data/students.csv"
+
+# ======================
+# 🔑 Razorpay LIVE KEYS (set here or via env vars)
+# ======================
+RAZORPAY_KEY_ID = "rzp_live_R77q3Kj0mqFwgr"
+RAZORPAY_KEY_SECRET = "z7ZIh1bhjzsEDmwjR2RlCCzM"
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 # ======================
 # Database Initialization
@@ -124,7 +141,6 @@ def contact():
 def test():
     return render_template("forgot.html")
 
-
 # ----------------------
 # Dashboard (Student List) - requires login
 # ----------------------
@@ -133,7 +149,7 @@ def dashboard():
     if not login_required():
         return redirect(url_for('login'))
 
-    conn = get_conn(sqlite3.Row)  # rows behave like dicts
+    conn = get_conn(sqlite3.Row)
     cur = conn.cursor()
     cur.execute("SELECT * FROM students ORDER BY sno DESC")
     students = cur.fetchall()
@@ -159,7 +175,6 @@ def login():
             session['user_id'] = user[0]
             session['username'] = user[1]
             flash("Login successful!", "success")
-            # If user came here from register link, send them to registration
             next_url = request.args.get("next")
             return redirect(next_url or url_for("dashboard"))
         else:
@@ -206,7 +221,6 @@ def forgot():
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
-        # Check if user exists
         cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
         user = cursor.fetchone()
 
@@ -235,7 +249,6 @@ def logout():
 @app.route('/registration', methods=['GET', 'POST'])
 def registration():
     if request.method == 'POST':
-        # Expecting JSON from your registration_payment.js
         data = request.get_json(force=True, silent=True) or {}
 
         conn = get_conn()
@@ -259,9 +272,7 @@ def registration():
 
         return jsonify({'success': True, 'message': 'Registered and payment saved.'})
 
-    # Show the registration + payment page
     return render_template('registration_payment.html')
-
 
 # ----------------------
 # Edit Student (requires login)
@@ -295,7 +306,6 @@ def edit_student(sno):
         flash("Student updated.", "success")
         return redirect(url_for("dashboard"))
 
-    # Fetch one for form
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute("SELECT * FROM students WHERE sno=?", (sno,))
@@ -338,7 +348,116 @@ def appointment():
     return render_template('appointment.html')
 
 # ======================
-# Run App
+# Razorpay Endpoints
 # ======================
+
+@app.route('/razorpay')
+def razorpay_page():
+    return render_template('razorpay.html')
+
+@app.route("/create-order", methods=["POST"])
+def create_order():
+    data = request.get_json(silent=True) or {}
+    try:
+        amount_rupees = int(data.get("amount", 1))
+        if amount_rupees <= 0:
+            return jsonify({"error": "Invalid amount (must be >= 1 rupee)"}), 400
+
+        print("[create-order] amount_rupees:", amount_rupees, "key:", (RAZORPAY_KEY_ID[:12] + "..."))
+
+        order = razorpay_client.order.create({
+            "amount": amount_rupees * 100,
+            "currency": "INR",
+            "payment_capture": 1,
+        })
+
+        return jsonify({
+            "order_id": order["id"],
+            "amount": order["amount"],
+            "currency": order["currency"],
+            "key": RAZORPAY_KEY_ID
+        })
+
+    except BadRequestError as e:
+        print("[Razorpay] BadRequestError:", e)
+        return jsonify({"error": f"Bad request to Razorpay: {e}"}), 400
+    except ServerError as e:
+        print("[Razorpay] ServerError:", e)
+        return jsonify({"error": "Razorpay server error. Try again."}), 502
+    except RazorpayError as e:
+        print("[Razorpay] RazorpayError:", e)
+        return jsonify({"error": f"Razorpay error: {e}"}), 401
+    except Exception as e:
+        print("[Create Order] Unexpected error:", type(e).__name__, e)
+        return jsonify({"error": f"Unexpected error: {e}"}), 500
+
+@app.route("/verify-payment", methods=["POST"])
+def verify_payment():
+    payload = request.get_json(silent=True) or {}
+    print("[verify-payment] payload:", payload)
+    rp_payment_id = payload.get("razorpay_payment_id")
+    rp_order_id   = payload.get("razorpay_order_id")
+    rp_signature  = payload.get("razorpay_signature")
+
+    if not all([rp_payment_id, rp_order_id, rp_signature]):
+        return jsonify({"ok": False, "error": "Missing payment parameters"}), 400
+
+    body = f"{rp_order_id}|{rp_payment_id}".encode()
+    expected_signature = hmac.new(
+        RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256
+    ).hexdigest()
+
+    if hmac.compare_digest(expected_signature, rp_signature):
+        return jsonify({"ok": True})
+    else:
+        return jsonify({"ok": False, "error": "Signature mismatch"}), 400
+
+# ✅ Razorpay fallback redirect (even if JS handler doesn’t run)
+@app.route("/razorpay/callback", methods=["GET", "POST"])
+def razorpay_callback():
+    rp_payment_id = request.values.get("razorpay_payment_id")
+    rp_order_id   = request.values.get("razorpay_order_id")
+    rp_signature  = request.values.get("razorpay_signature")
+
+    if not all([rp_payment_id, rp_order_id, rp_signature]):
+        return redirect("/payment-failed")
+
+    body = f"{rp_order_id}|{rp_payment_id}".encode()
+    expected_signature = hmac.new(
+        RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256
+    ).hexdigest()
+
+    if hmac.compare_digest(expected_signature, rp_signature):
+        return redirect("/payment-success")
+    else:
+        return redirect("/payment-failed")
+
+# 🔎 Debug helper to check a payment status directly
+@app.route("/payment-lookup")
+def payment_lookup():
+    pid = request.args.get("pid")
+    if not pid:
+        return jsonify({"error": "pass ?pid=payment_id"}), 400
+    try:
+        data = razorpay_client.payment.fetch(pid)
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+@app.route("/payment-success")
+def payment_success():
+    return render_template("payment_success.html")
+
+@app.route("/payment-failed")
+def payment_failed():
+    return render_template("payment_failed.html")
+
+# ---- Temporary diagnostics (remove in production) ----
+@app.route("/_razorpay_diag")
+def _razorpay_diag():
+    kid = RAZORPAY_KEY_ID or ""
+    mode = "LIVE" if kid.startswith("rzp_live_") else ("TEST" if kid.startswith("rzp_test_") else "UNKNOWN")
+    return {"key_id_prefix": (kid[:12] + "...") if kid else "", "mode": mode}, 200
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
