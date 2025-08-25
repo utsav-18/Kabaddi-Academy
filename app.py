@@ -262,7 +262,7 @@ def registration():
         data = request.get_json(force=True, silent=True) or {}
 
         # --- validate kit_size ---
-        allowed_sizes = {"XS","S","M","XL","XXL"}
+        allowed_sizes = {"XS","S","M","L","XL","XXL"}
         kit_size = (data.get('kit_size') or "").upper().strip()
         if kit_size not in allowed_sizes:
             return jsonify({'success': False, 'error': 'Invalid kit size'}), 400
