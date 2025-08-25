@@ -1,5 +1,108 @@
 {% extends "base.html" %}
 {% block content %}
+
+<style>
+    /* ===== Dashboard table: dark mode fixes ===== */
+body.dark-mode .student-table-container {
+  background: transparent; /* keep page bg from body */
+  color: #e5e7eb;          /* default text */
+}
+
+body.dark-mode .student-table {
+  width: 100%;
+  background: #0f172a;           /* slate-900 */
+  border-collapse: collapse;
+  border: 1px solid #1f2937;     /* slate-800 */
+  box-shadow: 0 6px 24px rgba(0,0,0,.35);
+}
+
+body.dark-mode .student-table th,
+body.dark-mode .student-table td {
+  border-color: #374151;         /* slate-700 */
+}
+
+body.dark-mode .student-table thead th {
+  background: #111827;           /* slate-900 */
+  color: #facc15;                /* your accent */
+}
+
+body.dark-mode .student-table tbody tr {
+  background: #0b1220;           /* slightly darker than table */
+}
+
+body.dark-mode .student-table tbody tr:nth-child(even) {
+  background: #0d1426;           /* zebra stripe */
+}
+
+body.dark-mode .student-table td {
+  color: #e5e7eb;                /* value color */
+}
+
+body.dark-mode .student-table a {
+  color: #93c5fd;                /* link readable on dark */
+}
+body.dark-mode .student-table a:hover {
+  color: #bfdbfe;
+  text-decoration: underline;
+}
+
+/* ===== Mobile stack view: make label and value readable ===== */
+@media (max-width: 768px) {
+  /* If you use the common pattern: th hidden, td blocks with ::before labels */
+  body.dark-mode .student-table td {
+    display: block;              /* your existing responsive CSS likely sets this */
+    color: #e5e7eb;
+    border-bottom: 1px solid #1f2937;
+  }
+  body.dark-mode .student-table td::before {
+    /* the "data-label" pseudo label */
+    color: #9ca3af;              /* slate-400 for labels */
+    font-weight: 600;
+  }
+  body.dark-mode .student-table tbody tr {
+    background: #0b1220;
+    margin-bottom: 10px;
+    border: 1px solid #1f2937;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+}
+
+/* ===== CTA button under table ===== */
+body.dark-mode .student-table-add {
+  background: #facc15;
+  color: #111827;
+  border: 1px solid #eab308;
+}
+body.dark-mode .student-table-add:hover {
+  background: #eab308;
+  color: #0b1220;
+}
+@media (max-width: 768px) {
+  td {
+    position: relative;
+    padding-left: 120px; /* space for label */
+    text-align: right;
+  }
+  td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  td .data-value {
+    display: inline-block;
+    width: 100%;
+    text-align: right;
+  }
+}
+
+
+</style>
+
 <div class="student-table-container">
     <h1 class="student-table-title">Registered Students</h1>
     {% if students %}
@@ -15,20 +118,25 @@
                     <th>Duration</th>
                     <th>Mobile No.</th>
                     <th>Aadhaar Number</th>
+                    <th>Kit Size</th>
+                    <th>Shoe Size</th>
                 </tr>
             </thead>
             <tbody>
                 {% for student in students %}
                 <tr>
-                    <td data-label="S.No">{{ student['sno'] }}</td>
-                    <td data-label="Name">{{ student['name'] }}</td>
-                    <td data-label="Father Name">{{ student['father_name'] }}</td>
-                    <td data-label="DOB">{{ student['dob'] }}</td>
-                    <td data-label="Class">{{ student['class'] }}</td>
-                    <td data-label="Academy Join Date">{{ student['academy_join'] }}</td>
-                    <td data-label="Duration">{{ student['duration'] or "N/A" }}</td>
-                    <td data-label="Mobile No.">{{ student['contact'] }}</td>
-                    <td data-label="Aadhaar Number">{{ student['aadhaar'] }}</td>
+                <td data-label="S.No"><span class="data-value">{{ student['sno'] }}</span></td>
+                <td data-label="Name"><span class="data-value">{{ student['name'] }}</span></td>
+                <td data-label="Father Name"><span class="data-value">{{ student['father_name'] }}</span></td>
+                <td data-label="DOB"><span class="data-value">{{ student['dob'] }}</span></td>
+                <td data-label="Class"><span class="data-value">{{ student['class'] }}</span></td>
+                <td data-label="Academy Join Date"><span class="data-value">{{ student['academy_join'] }}</span></td>
+                <td data-label="Duration"><span class="data-value">{{ student['duration'] or "N/A" }}</span></td>
+                <td data-label="Mobile No."><span class="data-value">{{ student['contact'] }}</span></td>
+                <td data-label="Aadhaar Number"><span class="data-value">{{ student['aadhaar'] }}</span></td>
+                <td data-label="Kit Size"><span class="data-value">{{ student['kit_size'] or "N/A" }}</span></td>
+                <td data-label="Shoe Size"><span class="data-value">{{ student['shoe_size'] if student['shoe_size'] is not none else "N/A" }}</span></td>
+
                 </tr>
                 {% endfor %}
             </tbody>

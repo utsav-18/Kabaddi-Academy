@@ -1,22 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Pay with Razorpay - KVS Kabaddi Academy{% endblock %}
-
 {% block content %}
 <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 
 <div class="container" style="max-width: 560px; margin: 40px auto;">
   <h2>Pay with Razorpay</h2>
-  <p>Enter amount and click Pay.</p>
+  <p style="margin-top:8px;">Admission Fee (fixed): <strong>₹199</strong></p>
 
-  <div style="margin: 16px 0;">
-    <label for="amount">Amount (₹)</label>
-    <input id="amount" type="number" min="1" value="499"
-           style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;">
-  </div>
-
+  <!-- No editable amount field; amount is fixed -->
   <button id="payBtn"
           style="padding:10px 16px;border:0;background:#0f9d58;color:#fff;border-radius:6px;cursor:pointer;">
-    Pay Now
+    Pay ₹199 Now
   </button>
 
   <div id="msg" style="margin-top:12px;color:#555;"></div>
@@ -27,23 +21,11 @@
 (function () {
   const payBtn = document.getElementById("payBtn");
   const msgEl = document.getElementById("msg");
-  const amountEl = document.getElementById("amount");
   const setMsg = (t) => { msgEl.textContent = t || ""; };
 
-  // === API CONFIG ===
-  const host = location.hostname;
-  const isLocal =
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    /^10\.\d+\.\d+\.\d+$/.test(host) ||
-    /^192\.168\.\d+\.\d+$/.test(host) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(host);
-
-  // Use local backend during local testing; same-origin in prod deployment
- const API_BASE = location.origin;   // in production
-
-
-  const PATH_CREATE = "/create_order";
+  // Same-origin backend in production
+  const API_BASE = location.origin;
+  const PATH_CREATE = "/create_order";      // server enforces 19900 paise
   const PATH_VERIFY = "/verify-payment";
 
   async function readJsonSafe(res) {
@@ -53,12 +35,12 @@
     try { return JSON.parse(text); } catch { throw new Error(`Bad JSON: ${text.slice(0,200)}`); }
   }
 
-  async function createOrder(rupees) {
-    const amount_paise = rupees * 100;
+  // Do NOT send amount; server locks to 19900 paise
+  async function createOrderFixed() {
     const res = await fetch(`${API_BASE}${PATH_CREATE}`, {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ amount: amount_paise })
+      body: JSON.stringify({})   // no amount; backend uses fixed 199
     });
     if (!res.ok) { const t = await res.text(); throw new Error(`Create order ${res.status}: ${t.slice(0,200)}`); }
     return readJsonSafe(res); // { id, amount, currency, key }
@@ -79,35 +61,29 @@
   }
 
   async function startPayment() {
-    const rupees = parseInt(amountEl.value || "0", 10);
-    if (!rupees || rupees < 1) { setMsg("Enter a valid amount (₹)."); return; }
-
     try {
       setMsg("Creating order…");
-      const order = await createOrder(rupees);
+      const order = await createOrderFixed();
       setMsg("");
 
       const options = {
         key:       order.key || order.key_id,
-        amount:    order.amount,
+        amount:    order.amount,                 // 19900 paise
         currency:  order.currency || "INR",
         name:      "KVS Kabaddi Academy",
-        description: "Online Payment",
+        description: "Admission Fee (₹199)",
         order_id:  order.id || order.order_id,
         theme: { color: "#0f9d58" },
         handler: async function (response) {
           try {
             const verify = await verifyPayment(response);
             if (verify && (verify.ok === true || verify.status === "verified")) {
-              alert("✅ Payment Successful! Payment ID: " + response.razorpay_payment_id);
-              window.location.href = "/payment-success";
+              window.location.href = "/payment_success_page";  // underscore route in Flask
             } else {
-              alert("❌ Payment verification failed.");
-              window.location.href = "/payment-failed";
+              window.location.href = "/payment_failed";
             }
           } catch (e) {
-            alert("❌ Verify error: " + e.message);
-            window.location.href = "/payment-failed";
+            window.location.href = "/payment_failed";
           }
         },
         modal: { ondismiss: function(){ setMsg("Payment popup closed. No charge made."); } }
@@ -115,8 +91,7 @@
 
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (res) {
-        alert("❌ Payment failed: " + (res.error?.description || "Unknown error"));
-        window.location.href = "/payment-failed";
+        window.location.href = "/payment_failed";
       });
 
       rzp.open();

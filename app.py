@@ -23,6 +23,10 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecretkey")  # change in pr
 DB_PATH = "data/database.db"
 CSV_PATH = "data/students.csv"
 
+# === FIXED AMOUNT ===
+FIXED_AMOUNT_RUPEES = 199
+FIXED_AMOUNT_PAISE = FIXED_AMOUNT_RUPEES * 100  # 19900
+
 # Load RZP keys from key.env (local) or env (prod)
 BASE_DIR = Path(__file__).resolve().parent
 key_env_path = BASE_DIR / "key.env"
@@ -37,20 +41,19 @@ razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 # Simple helper
 def _prefix(s): return (s[:8] + "…" + s[-4:]) if s else ""
-
 print("[RZP] key_id:", _prefix(RAZORPAY_KEY_ID) or "<missing>")
 
 # --------------------------------------------------------------------------------------
 # CORS (Frontend origins)
 # --------------------------------------------------------------------------------------
 FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://127.0.0.1:5000")
-
 CORS(
     app,
     resources={r"/*": {"origins": [FRONTEND_ORIGIN]}},
     methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
 )
+
 # --------------------------------------------------------------------------------------
 # Database
 # --------------------------------------------------------------------------------------
@@ -81,6 +84,21 @@ def init_db():
         )
     """)
     conn.commit()
+
+    # --- ensure new columns exist for kit/shoe sizes ---
+    try:
+        cur = conn.cursor()
+        cur.execute("PRAGMA table_info(students)")
+        cols = {row[1] for row in cur.fetchall()}  # column names
+        if "kit_size" not in cols:
+            cur.execute("ALTER TABLE students ADD COLUMN kit_size TEXT")
+        if "shoe_size" not in cols:
+            cur.execute("ALTER TABLE students ADD COLUMN shoe_size INTEGER")
+        conn.commit()
+    except Exception as e:
+        print("Column ensure failed:", e)
+
+    # Optional CSV import for first run
     try:
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM students")
@@ -187,7 +205,7 @@ def login():
         if user:
             session['user_id'], session['username'] = user[0], user[1]
             flash("Login successful!", "success")
-            return redirect(request.args.get("next") or url_for("dashboard"))
+            return redirect(request.args.get("next") or url_for("registration"))
         else:
             flash("Invalid credentials!", "danger")
     return render_template("login.html")
@@ -242,16 +260,39 @@ def logout():
 def registration():
     if request.method == 'POST':
         data = request.get_json(force=True, silent=True) or {}
+
+        # --- validate kit_size ---
+        allowed_sizes = {"XS","S","M","XL","XXL"}
+        kit_size = (data.get('kit_size') or "").upper().strip()
+        if kit_size not in allowed_sizes:
+            return jsonify({'success': False, 'error': 'Invalid kit size'}), 400
+
+        # --- validate shoe_size (integer only, positive) ---
+        shoe_raw = str(data.get('shoe_size', '')).strip()
+        if not shoe_raw.isdigit():
+            return jsonify({'success': False, 'error': 'Invalid shoe size (integer only)'}), 400
+        shoe_size = int(shoe_raw)
+        if shoe_size <= 0:
+            return jsonify({'success': False, 'error': 'Invalid shoe size (must be > 0)'}), 400
+
         conn = get_conn(); cur = conn.cursor()
         cur.execute("""
-            INSERT INTO students (name,father_name,dob,class,academy_join,duration,contact,aadhaar,payment_id)
-            VALUES (?,?,?,?,?,?,?,?,?)
-        """, (data.get('name'), data.get('father_name'), data.get('dob'), data.get('class'),
-              data.get('academy_join'), data.get('duration'), data.get('contact'),
-              data.get('aadhaar'), data.get('payment_id')))
+            INSERT INTO students
+                (name, father_name, dob, class, academy_join, duration,
+                 contact, aadhaar, payment_id, kit_size, shoe_size)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        """, (
+            data.get('name'), data.get('father_name'), data.get('dob'), data.get('class'),
+            data.get('academy_join'), data.get('duration'), data.get('contact'),
+            data.get('aadhaar'), data.get('payment_id'), kit_size, shoe_size
+        ))
         conn.commit(); conn.close()
         return jsonify({'success': True, 'message': 'Registered and payment saved.'})
-    return render_template('registration_payment.html')
+
+    # GET: show page with fixed amount provided
+    return render_template('registration_payment.html',
+                           amount=FIXED_AMOUNT_RUPEES,
+                           fixed_amount=FIXED_AMOUNT_RUPEES)
 
 @app.route('/razorpay')
 def razorpay_page(): return render_template('razorpay.html')
@@ -259,30 +300,22 @@ def razorpay_page(): return render_template('razorpay.html')
 @app.route('/get_key')
 def get_key(): return jsonify({"key": RAZORPAY_KEY_ID})
 
-# ---------- Create Order ----------
-# POST /create_order -> { id, amount, currency, key }
+# ---------- Create Order (FIXED ₹199 ONLY) ----------
 @app.route("/create_order", methods=["POST"])
 def create_order():
     data = request.get_json(silent=True) or {}
+
+    # Reject attempts to override amount from client
+    if ("amount" in data and int(data.get("amount") or 0) not in (0, FIXED_AMOUNT_PAISE)) or \
+       ("rupees" in data and int(data.get("rupees") or 0) not in (0, FIXED_AMOUNT_RUPEES)):
+        return jsonify({"error": f"Amount is locked to ₹{FIXED_AMOUNT_RUPEES} only."}), 400
+
     try:
-        # Ensure keys present
         if not RAZORPAY_KEY_ID or not RAZORPAY_KEY_SECRET:
             return jsonify({"error": "Server misconfigured: missing Razorpay keys"}), 500
 
-        # Expect paise from client; support 'rupees' fallback and small-value heuristic
-        if "rupees" in data:
-            amount_paise = int(data.get("rupees", 0)) * 100
-        else:
-            amount_paise = int(data.get("amount", 0))  # expected paise
-
-        if 0 < amount_paise < 100:
-            amount_paise = amount_paise * 100  # treat tiny values as rupees by mistake
-
-        if amount_paise <= 0:
-            return jsonify({"error": "Invalid amount (send paise, e.g., ₹1 -> 100)"}), 400
-
         order = razorpay_client.order.create({
-            "amount": amount_paise,
+            "amount": FIXED_AMOUNT_PAISE,   # 19900 paise
             "currency": "INR",
             "payment_capture": 1
         })
@@ -293,18 +326,16 @@ def create_order():
             "key": RAZORPAY_KEY_ID
         }), 201
     except RazorpayError as e:
-        # Surface any SDK error details
         return jsonify({"error": "RazorpayError", "message": str(e)}), 400
     except Exception as e:
         return jsonify({"error": "Exception", "message": str(e)}), 400
 
-# Backward-compatible alias (if any old client still calls dash path)
+# Backward-compatible alias
 @app.route("/create-order", methods=["POST"])
 def create_order_alias():
     return create_order()
 
 # ---------- Verify Payment ----------
-# POST /verify-payment -> { ok: true } on success
 @app.route("/verify-payment", methods=["POST"])
 def verify_payment():
     try:
@@ -317,19 +348,40 @@ def verify_payment():
 
         body = f"{rp_order_id}|{rp_payment_id}".encode()
         expected = hmac.new(RAZORPAY_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
-        if hmac.compare_digest(expected, rp_signature):
-            return jsonify({"ok": True}), 200
-        return jsonify({"ok": False, "error": "signature_mismatch"}), 400
+        if not hmac.compare_digest(expected, rp_signature):
+            return jsonify({"ok": False, "error": "signature_mismatch"}), 400
+
+        # Optional extra check: payment fetch & amount verification
+        try:
+            payment_data = razorpay_client.payment.fetch(rp_payment_id)
+            if int(payment_data.get("amount", -1)) != FIXED_AMOUNT_PAISE or payment_data.get("currency") != "INR":
+                return jsonify({"ok": False, "error": "amount_mismatch"}), 400
+        except Exception:
+            pass
+
+        return jsonify({"ok": True}), 200
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 400
 
-# Payment pages (HTML)
-@app.route("/payment_success_page")
-def payment_success_page(): return render_template("payment_success.html")
+# ---------- Payment result pages ----------
+@app.get("/payment_success_page")
+def payment_success_page():
+    return render_template("payment_success.html", amount=FIXED_AMOUNT_RUPEES)
 
-@app.route("/payment_failed")
-def payment_failed(): return render_template('payment_failed.html')
+@app.get("/payment_failed")
+def payment_failed():
+    return render_template("payment_failed.html", message=f"Payment is fixed at ₹{FIXED_AMOUNT_RUPEES}.")
 
+# Aliases so either style works
+@app.get("/payment-success")
+def payment_success_alias():
+    return redirect(url_for("payment_success_page"))
+
+@app.get("/payment-failed")
+def payment_failed_alias():
+    return redirect(url_for("payment_failed"))
+
+# ---------- Optional: Razorpay callback route ----------
 @app.route("/razorpay/callback", methods=["GET","POST"])
 def razorpay_callback():
     rp_payment_id, rp_order_id, rp_signature = request.values.get("razorpay_payment_id"), request.values.get("razorpay_order_id"), request.values.get("razorpay_signature")
@@ -366,5 +418,4 @@ def health():
 # --------------------------------------------------------------------------------------
 if __name__ == '__main__':
     port = int(os.getenv("PORT", "5000"))
-    # Bind 0.0.0.0 so it’s reachable on LAN; disable debug in prod
     app.run(host="0.0.0.0", port=port, debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")

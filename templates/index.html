@@ -103,7 +103,7 @@
                         <p>Train Like a Pro. Play Like a Champion.</p>
                         <p>Join KVS Kabaddi Academy, Jodhpur – Home of National-Level Players.</p>
                         <div class="hero-buttons">
-                            <a href="{{ url_for('registration') }}" class="btn btn-outline">Register Now</a>
+                            <a href="{% if session.get('user_id') %}{{ url_for('registration') }}{% else %}{{ url_for('login') }}{% endif %}" class="btn btn-outline" >Register Now</a>
                         </div>
                     </div>
                 </div>
@@ -149,7 +149,7 @@
                         <p>Intense professional Kabaddi training sessions designed for improving stamina, agility, 
                         and advanced playing techniques.</p>
                         <div class="price">
-                            <span>₹500 / month</span>
+                            <span>₹1000 / month</span>
                         </div>
                     </div>
         

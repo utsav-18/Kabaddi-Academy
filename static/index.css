@@ -573,7 +573,7 @@ nav {
 .reg-main-container {
     margin-top: 50px; /* keep desktop spacing */
     position:absolute;
-    height: 120vh;
+    height: 140vh;
     width: 100vw;
     display: flex;
     justify-content: center;
@@ -1144,6 +1144,7 @@ body.dark-mode .contact-row.address i { color: #facc15; text-shadow: 0 0 8px #fa
     align-items: flex-start !important;   /* beat the base rule */
     position: absolute;                      /* keep your full-screen modal vibe */
     top: 80px;                            /* header height + a lil spacing */
+    bottom: 20px;
     left: 0; right: 0;
 
     /* use dynamic viewport units to avoid mobile URL bar bugs */

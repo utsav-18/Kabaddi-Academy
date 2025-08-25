@@ -8,6 +8,10 @@
   <div class="registration-container">
     <h1 class="form-title">Register & Pay</h1>
 
+    <!-- <div style="margin:8px 0 16px; font-weight:600;">
+      Admission Fee: <span style="color:#16a34a;">₹{{ amount or fixed_amount or 199 }}</span> (fixed)
+    </div> -->
+
     <form id="regForm" class="registration-form">
       <label>Name:<input type="text" name="name" class="form-input" required></label>
       <label>Father Name:<input type="text" name="father_name" class="form-input"></label>
@@ -15,9 +19,31 @@
       <label>Class:<input type="text" name="class" class="form-input"></label>
       <label>Academy Join Date:<input type="date" name="academy_join" class="form-input" required></label>
       <label>Duration (e.g. 6 months, 1 year):<input type="text" name="duration" class="form-input" placeholder="e.g. 6 months" required></label>
+
+      <!-- NEW: Kit Size dropdown -->
+      <label>Kit Size:
+        <select name="kit_size" class="form-input" required>
+          <option value="">Select</option>
+          <option value="XS">XS</option>
+          <option value="S">S</option>
+          <option value="M">M</option>
+          <option value="XL">XL</option>
+          <option value="XXL">XXL</option>
+        </select>
+      </label>
+
+      <!-- NEW: Shoe Size integer only -->
+      <label>Shoe Size:
+        <input type="text" name="shoe_size" class="form-input" required
+               inputmode="numeric" pattern="^[0-9]+$"
+               oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+               placeholder="e.g. 8">
+      </label>
+
       <label>Mobile No.:<input type="text" name="contact" class="form-input" maxlength="10" inputmode="numeric" required oninput="this.value=this.value.replace(/[^0-9]/g,'')"></label>
       <label>Aadhaar Number:<input type="text" name="aadhaar" class="form-input" maxlength="14" inputmode="numeric" required oninput="this.value=this.value.replace(/[^0-9]/g,'')"></label>
-      <button type="button" id="payBtn" class="btn-primary">Pay ₹1 & Register</button>
+
+      <button type="button" id="payBtn" class="btn-primary">Pay ₹{{ amount or fixed_amount or 199 }} & Register</button>
     </form>
 
     <div id="msg" style="margin-top:12px;color:#555;"></div>
@@ -32,18 +58,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const msgEl = document.getElementById("msg");
   const setMsg = (t) => { if (msgEl) msgEl.textContent = t || ""; console.log("[UI]", t); };
 
-  // === API CONFIG ===
-  const host = location.hostname;
-  const isLocal =
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    /^10\.\d+\.\d+\.\d+$/.test(host) ||
-    /^192\.168\.\d+\.\d+$/.test(host) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(host);
-
-  // Use local backend during local testing; same-origin in prod deployment
- const API_BASE = location.origin;   // in production
-
+  // Same-origin backend in production
+  const API_BASE = location.origin;
 
   const PATH_CREATE = "/create_order";
   const PATH_VERIFY = "/verify-payment";
@@ -66,21 +82,27 @@ document.addEventListener("DOMContentLoaded", function () {
       const duration = form.elements['duration'].value.trim();
       const academyJoin = form.elements['academy_join'].value.trim();
 
-      if (!name || !contact || !aadhaarRaw || !duration || !academyJoin) { alert("Please fill in all required fields before proceeding."); return; }
+      const kitSize = form.elements['kit_size'].value.trim().toUpperCase();
+      const shoeSize = form.elements['shoe_size'].value.trim();
+
+      if (!name || !contact || !aadhaarRaw || !duration || !academyJoin || !kitSize || !shoeSize) { alert("Please fill in all required fields before proceeding."); return; }
+      if (!/^(XS|S|M|XL|XXL)$/.test(kitSize)) { alert("Please select a valid Kit Size (XS, S, M, XL, XXL)."); return; }
+      if (!/^\d+$/.test(shoeSize)) { alert("Shoe size must be an integer."); return; }
       if (!/^\d{12}$/.test(aadhaarRaw)) { alert("Please enter a valid 12-digit Aadhaar number."); return; }
       if (!/^\d{10}$/.test(contact)) { alert("Please enter a valid 10-digit mobile number."); return; }
 
       const formData = new FormData(form);
       const data = {}; formData.forEach((v, k) => data[k] = v);
       data.aadhaar = aadhaarRaw;
+      data.kit_size = kitSize;
+      data.shoe_size = shoeSize;
 
-      const amountPaise = 100; // ₹1
-
+      // Create order (server enforces fixed 19900 paise)
       setMsg("Creating order…");
       const orderRes = await fetch(`${API_BASE}${PATH_CREATE}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: amountPaise })
+        body: JSON.stringify({})
       });
       if (!orderRes.ok) { const t = await orderRes.text(); throw new Error(`Create order ${orderRes.status}: ${t.slice(0,200)}`); }
       const order = await readJsonSafe(orderRes);
@@ -88,7 +110,7 @@ document.addEventListener("DOMContentLoaded", function () {
       setMsg("Opening payment popup…");
       const options = {
         key: order.key || order.key_id,
-        amount: order.amount,
+        amount: order.amount,                 // 19900 paise
         currency: order.currency || "INR",
         name: "KVS Kabaddi Academy",
         description: "Admission Fee",
@@ -112,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!(verify && (verify.ok === true || verify.status?.includes("verified")))) {
               alert("❌ Payment verification failed on server.");
-              setMsg("Verification failed."); window.location.href = "/payment-failed"; return;
+              setMsg("Verification failed."); window.location.href = "/payment_failed"; return;
             }
 
             setMsg("Saving registration…");
@@ -125,15 +147,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const saveJson = await readJsonSafe(saveRes);
 
             if (saveJson && saveJson.success) {
-              window.location.href = "/payment-success";
+              window.location.href = "/payment_success_page"; // success page
             } else {
               alert("Payment verified, but saving registration failed.");
               setMsg("Payment verified, but DB save failed.");
+              window.location.href = "/payment_failed";
             }
           } catch (e) {
             console.error("[handler error]", e);
             alert("Verification/save error: " + e.message);
-            window.location.href = "/payment-failed";
+            window.location.href = "/payment_failed";
           }
         },
         modal: { ondismiss: function(){ setMsg("Payment popup closed. No charge made."); } }
@@ -142,7 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const rzp = new Razorpay(options);
       rzp.on("payment.failed", function (res) {
         alert("❌ Payment failed: " + (res.error?.description || "Unknown error"));
-        window.location.href = "/payment-failed";
+        window.location.href = "/payment_failed";
       });
 
       rzp.open();
@@ -154,6 +177,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  // Aadhaar pretty spacing
   const aadhaarInput = document.querySelector("input[name='aadhaar']");
   if (aadhaarInput) {
     aadhaarInput.addEventListener("input", function(e) {
