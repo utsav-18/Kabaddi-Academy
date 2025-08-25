@@ -87,7 +87,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const shoeSize = form.elements['shoe_size'].value.trim();
 
       if (!name || !contact || !aadhaarRaw || !duration || !academyJoin || !kitSize || !shoeSize) { alert("Please fill in all required fields before proceeding."); return; }
-      if (!/^(XS|S|M|XL|XXL)$/.test(kitSize)) { alert("Please select a valid Kit Size (XS, S, M, XL, XXL)."); return; }
+      
+      if (!/^(XS|S|M|L|XL|XXL)$/.test(kitSize)) { alert("Please select a valid Kit Size (XS, S, M, L, XL, XXL)."); return;}
       if (!/^\d+$/.test(shoeSize)) { alert("Shoe size must be an integer."); return; }
       if (!/^\d{12}$/.test(aadhaarRaw)) { alert("Please enter a valid 12-digit Aadhaar number."); return; }
       if (!/^\d{10}$/.test(contact)) { alert("Please enter a valid 10-digit mobile number."); return; }
